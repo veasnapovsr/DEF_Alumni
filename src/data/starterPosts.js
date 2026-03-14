@@ -1,0 +1,32 @@
+export const starterPosts = [
+  {
+    id: 1,
+    author: 'Claire N.',
+    year: 'Class of 2018',
+    caption: 'Throwback to our French drama night and the loudest laughter in the department hall.',
+    likes: 124,
+    comments: 18,
+    mood: 'Golden Hour',
+    palette: 'sunset',
+  },
+  {
+    id: 2,
+    author: 'Marcel D.',
+    year: 'Class of 2020',
+    caption: 'A small reunion, old stories, and the same friends who still remember every inside joke.',
+    likes: 98,
+    comments: 11,
+    mood: 'Studio Noir',
+    palette: 'ink',
+  },
+  {
+    id: 3,
+    author: 'Amina K.',
+    year: 'Class of 2016',
+    caption: 'The department courtyard still feels like home when the alumni family meets there again.',
+    likes: 176,
+    comments: 23,
+    mood: 'Cafe Creme',
+    palette: 'cream',
+  },
+]

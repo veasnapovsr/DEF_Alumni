@@ -1,0 +1,154 @@
+{
+  "users": [
+    {
+      "id": "df77047b-b99a-4e05-99df-0cb34d519c67",
+      "email": "chillguy@gmail.com",
+      "passwordHash": "$2b$10$wfRyBwcP.lzmYn8Jw5Muku8XuSH.Uin6YXDycROMZcZ.l5QS.vCAm",
+      "fullName": "chillguy",
+      "academicYear": "2025-2026",
+      "major1": "chilling",
+      "major2": "chilling",
+      "bio": "chillllling",
+      "location": "unknown",
+      "avatarUrl": "",
+      "role": "student",
+      "createdAt": "2026-03-14T08:35:57.887Z",
+      "updatedAt": "2026-03-14T08:36:45.526Z",
+      "posts": [
+        {
+          "id": "e5ecfd42-0552-43f5-be4a-495954400b64",
+          "imageUrl": "/uploads/1773477405522-0454e11b-8229-489f-bfc0-319b392cc55d.jpg",
+          "imageUrls": [
+            "/uploads/1773477405522-0454e11b-8229-489f-bfc0-319b392cc55d.jpg",
+            "/uploads/1773477405520-215edf90-d300-45db-a3f1-3d2fa0dc0259.jpg"
+          ],
+          "caption": "I'm just a chill guy.",
+          "createdAt": "2026-03-14T08:36:45.526Z"
+        }
+      ]
+    },
+    {
+      "id": "6f26ca6d-69f0-47ff-af12-fc114366db91",
+      "email": "joemama@gmail.com",
+      "passwordHash": "$2b$10$C67AltESGYMWyDzKFBAIuOH0cwEQ7uiM1Gsy66q36MFQkRoPHS8e6",
+      "fullName": "joemama",
+      "academicYear": "2025-2026",
+      "major1": "unknown",
+      "major2": "unknown",
+      "bio": "unknown",
+      "location": "unknown",
+      "avatarUrl": "",
+      "role": "student",
+      "createdAt": "2026-03-14T08:20:30.390Z",
+      "updatedAt": "2026-03-14T08:22:45.543Z",
+      "posts": [
+        {
+          "id": "53860c8e-10ef-47ab-810d-e510d27d58c5",
+          "imageUrl": "/uploads/1773476565537-f5291b21-19a7-435a-8335-44df4f447f97.jpg",
+          "imageUrls": [
+            "/uploads/1773476565537-f5291b21-19a7-435a-8335-44df4f447f97.jpg",
+            "/uploads/1773476565537-03d7ec70-ed86-4d17-9672-9f9b0c9ccaac.jpg"
+          ],
+          "caption": "My mom is kinda homeless",
+          "createdAt": "2026-03-14T08:22:45.543Z"
+        }
+      ]
+    },
+    {
+      "id": "fd202caa-dfad-4428-8da5-4f0224ec38e0",
+      "email": "veasnavarapov@gmail.com",
+      "passwordHash": "$2b$10$ma5DWnK9aJhhRnDpagmV4enZUOFY94mwRuuvKHBlmcmiXOvsj/4/G",
+      "fullName": "veasna",
+      "academicYear": "2025-2026",
+      "major1": "French literature",
+      "major2": "Computer Science",
+      "bio": "A 4th year student from DEF and CADT",
+      "location": "Siem reap",
+      "avatarUrl": "/uploads/1773220565687-3f3023d7-1bdc-489d-8538-097840ff2479.jpg",
+      "role": "admin",
+      "createdAt": "2026-03-11T09:15:56.098Z",
+      "updatedAt": "2026-03-14T08:13:56.951Z",
+      "posts": [
+        {
+          "id": "927dd5f4-73df-431d-90aa-c0d368589278",
+          "imageUrl": "/uploads/1773476036934-2d6aaf27-1770-4c92-80e3-9e88a1393d9d.jpg",
+          "imageUrls": [
+            "/uploads/1773476036934-2d6aaf27-1770-4c92-80e3-9e88a1393d9d.jpg",
+            "/uploads/1773476036939-1d30a3e2-3475-4080-978c-82affe5f48ed.jpg",
+            "/uploads/1773476036943-d68dc7e1-f7b7-4bc0-a46b-994a5d18e57f.jpg"
+          ],
+          "caption": "Ministry of Foreign Affaires",
+          "createdAt": "2026-03-14T08:13:56.951Z"
+        },
+        {
+          "id": "cec659b7-85e9-47aa-b45d-8533a9dc9018",
+          "imageUrl": "/uploads/1773475479212-ffb5a87d-d5b6-40a2-b9f5-50828c075b8c.jpg",
+          "imageUrls": [
+            "/uploads/1773475479212-ffb5a87d-d5b6-40a2-b9f5-50828c075b8c.jpg",
+            "/uploads/1773475479223-97a56ede-54fd-4360-abf6-63752b181c47.jpg",
+            "/uploads/1773475479231-1e5213d9-3c6d-4f70-86ec-d79f8bd1c748.jpg",
+            "/uploads/1773475479238-8b2c28c5-4b50-4e4b-a8fb-2256d06c11cb.jpg",
+            "/uploads/1773475479244-3cfc28b4-52f5-4aae-8049-da2906f6fb19.jpg"
+          ],
+          "caption": "Gym lover",
+          "createdAt": "2026-03-14T08:04:39.250Z"
+        },
+        {
+          "id": "7a692439-5b74-46e3-a805-6a73ab2a197d",
+          "imageUrl": "/uploads/1773222061849-f0f474b9-f28b-4dc9-a3bb-219a75b65190.jpg",
+          "imageUrls": [
+            "/uploads/1773222061849-f0f474b9-f28b-4dc9-a3bb-219a75b65190.jpg"
+          ],
+          "caption": "A good time on the top of sky bar at chipmong tower. weeeeee",
+          "createdAt": "2026-03-11T09:41:01.867Z"
+        }
+      ]
+    }
+  ],
+  "homepage": {
+    "heroSlides": [
+      {
+        "id": "hero-community",
+        "title": "Le 20ème sommet de la francophonie, au Cambodge.",
+        "subtitle": "Students can log in, keep their profile current, and share a stronger public identity inside the Department of French portal.",
+        "caption": "Student portal",
+        "imageUrl": "/uploads/1773473216866-82906041-3b84-4547-a695-70198cffc86d.jpg"
+      },
+      {
+        "id": "hero-access",
+        "title": "La journée de la francophonie",
+        "subtitle": "Profiles are no longer placeholders. Existing accounts can sign in, update details, and use avatar uploads backed by the server.",
+        "caption": "Account access",
+        "imageUrl": "/uploads/slide2.jpg"
+      },
+      {
+        "id": "hero-management",
+        "title": "A good time, a good memory",
+        "subtitle": "We visited many temples during the day and visited night temple at night, if you know you know.",
+        "caption": "Year 2 trip",
+        "imageUrl": "/uploads/1773472783369-6d762363-d2bd-4b22-b41a-a9b3398d6022.jpg"
+      }
+    ],
+    "eventRows": [
+      {
+        "id": "event-profile",
+        "description": "Veasna went to this school and got cooked by code.",
+        "imageUrl": "/uploads/1773393869168-5d10f301-78af-4079-b0b1-21e800d3d1e4.jpg"
+      },
+      {
+        "id": "event-directory",
+        "description": "This picture is pretty so i added here.",
+        "imageUrl": "/uploads/slide2.jpg"
+      },
+      {
+        "id": "event-photos",
+        "description": "Year 2....",
+        "imageUrl": "/uploads/1773477709878-7c3e9067-7a5f-43cc-b9a0-c2e951adc3ce.jpg"
+      }
+    ],
+    "footer": {
+      "title": "DEF student portal",
+      "description": "All right reserved : Veasna Pov"
+    }
+  }
+}

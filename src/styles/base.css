@@ -1,0 +1,68 @@
+:root {
+  font-family: var(--font-body);
+  line-height: 1.5;
+  font-weight: 400;
+  color: #13213c;
+  --font-display: Cambria, 'Palatino Linotype', 'Book Antiqua', serif;
+  --font-body: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --brand-blue: #0055a4;
+  --brand-blue-deep: #0f2d62;
+  --brand-red: #ef4135;
+  --brand-red-deep: #b32525;
+  --brand-white: #fffdfb;
+  --text-strong: #13213c;
+  --text-muted: #5a6482;
+  --panel-bg: rgba(255, 253, 251, 0.94);
+  --panel-alt: rgba(240, 245, 255, 0.94);
+  --line-color: rgba(0, 85, 164, 0.14);
+  --shadow-color: rgba(15, 45, 98, 0.14);
+  background:
+    radial-gradient(circle at 14% 16%, rgba(0, 85, 164, 0.18), transparent 26%),
+    radial-gradient(circle at 86% 18%, rgba(239, 65, 53, 0.16), transparent 24%),
+    radial-gradient(circle at 50% 72%, rgba(255, 255, 255, 0.58), transparent 30%),
+    radial-gradient(circle at 28% 60%, rgba(15, 45, 98, 0.08), transparent 24%),
+    linear-gradient(135deg, #edf4ff 0%, #f9fbff 28%, #fffdfb 58%, #fff7f6 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: transparent;
+  color: var(--text-strong);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
