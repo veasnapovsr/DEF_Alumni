@@ -5,66 +5,20 @@ import HomePage from './pages/HomePage'
 import ProfilePage from './pages/ProfilePage'
 import StudentProfilePage from './pages/StudentProfilePage'
 import AdminPage from './pages/AdminPage'
+import {
+  defaultHomePageContentByLanguage,
+  getDateLocale,
+  getInitialLanguage,
+  getUiText,
+  LANGUAGE_STORAGE_KEY,
+  supportedLanguages,
+} from './data/translations'
 import { apiRequest, getAssetUrl } from './utils/api'
 import { getPostImageUrls, normalizePostMediaCollection } from './utils/postMedia'
 import './styles/app.css'
 
 const TOKEN_STORAGE_KEY = 'def-auth-token'
 const MOBILE_NAV_BREAKPOINT = 900
-
-const navigationLinks = [
-  { label: 'Events', to: '/#events' },
-  { label: 'Photos', to: '/#photos' },
-  { label: 'Profile', to: '/profile' },
-  { label: 'Students', to: '/#students' },
-]
-
-const defaultHomePageContent = {
-  heroSlides: [
-  {
-    id: 'hero-community',
-    title: 'DEF alumni memories in one place',
-    subtitle: 'Students can log in, keep their profile current, and share a stronger public identity inside the Department of French portal.',
-    caption: 'Student portal',
-    imageUrl: '/uploads/slide1.jpg',
-  },
-  {
-    id: 'hero-access',
-    title: 'Student accounts managed by admins',
-    subtitle: 'Profiles are no longer placeholders. Existing accounts can sign in, update details, and use avatar uploads backed by the server.',
-    caption: 'Account access',
-    imageUrl: '/uploads/slide2.jpg',
-  },
-  {
-    id: 'hero-management',
-    title: 'Manage photos and personal information',
-    subtitle: 'The portal is ready for login, profile updates, and a student directory powered by stored backend data.',
-    caption: 'Editable profile',
-    imageUrl: '/uploads/1773222107424-f09db150-2cc1-426d-ad89-6ef01bea0992.jpg',
-  },
-  ],
-  eventRows: [
-    {
-      id: 'event-profile',
-      description: 'Authenticated users can edit their personal information, majors, location, and bio from the portal.',
-      imageUrl: '/uploads/slide1.jpg',
-    },
-    {
-      id: 'event-directory',
-      description: 'Admin users can add, update, and remove student records without editing source files.',
-      imageUrl: '/uploads/slide2.jpg',
-    },
-    {
-      id: 'event-photos',
-      description: 'Homepage pictures and section descriptions can be updated from the admin panel and reflected on the public site.',
-      imageUrl: '/uploads/slide3.jpg',
-    },
-  ],
-  footer: {
-    title: 'DEF student portal backend',
-    description: 'Authentication, editable profiles, and picture uploads are now part of the application architecture and ready for further expansion.',
-  },
-}
 
 const placeholderStudents = [
   { id: 'placeholder-1', fullName: 'Nadine M.', major1: 'French Literature', major2: 'Media Studies', academicYear: '2025-2026', avatarUrl: '' },
@@ -93,8 +47,8 @@ function normalizeStudent(student) {
   return {
     id: student.id,
     fullName: student.fullName,
-    major1: student.major1 || 'Add major',
-    major2: student.major2 || 'Add second major',
+    major1: student.major1 || '',
+    major2: student.major2 || '',
     academicYear: student.academicYear || '2025-2026',
     bio: student.bio || '',
     location: student.location || '',
@@ -150,8 +104,8 @@ function buildStudentGalleryHighlights(students) {
     .slice(0, 9)
 }
 
-function normalizeSiteContent(content) {
-  const fallback = defaultHomePageContent
+function normalizeSiteContent(content, fallbackContent) {
+  const fallback = fallbackContent
   const heroSlides = Array.isArray(content?.heroSlides) && content.heroSlides.length ? content.heroSlides : fallback.heroSlides
   const eventRows = Array.isArray(content?.eventRows) && content.eventRows.length ? content.eventRows : fallback.eventRows
 
@@ -160,7 +114,7 @@ function normalizeSiteContent(content) {
       id: slide.id || fallback.heroSlides[index]?.id || `hero-${index + 1}`,
       title: slide.title || fallback.heroSlides[index]?.title || '',
       subtitle: slide.subtitle || fallback.heroSlides[index]?.subtitle || '',
-      caption: slide.caption || fallback.heroSlides[index]?.caption || `Slide ${index + 1}`,
+      caption: slide.caption || fallback.heroSlides[index]?.caption || '',
       imageUrl: slide.imageUrl || fallback.heroSlides[index]?.imageUrl || '',
     })),
     eventRows: eventRows.map((eventRow, index) => ({
@@ -206,12 +160,22 @@ async function fetchAdminStudents(token) {
 
 async function fetchSiteContent() {
   const payload = await apiRequest('/api/site-content')
-  return normalizeSiteContent(payload.content)
+  return payload.content
 }
 
 function App() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [language, setLanguage] = useState(() => getInitialLanguage())
+  const uiText = getUiText(language)
+  const dateLocale = getDateLocale(language)
+  const defaultHomePageContent = defaultHomePageContentByLanguage[language] || defaultHomePageContentByLanguage.en
+  const navigationLinks = [
+    { label: uiText.nav.events, to: '/#events' },
+    { label: uiText.nav.photos, to: '/#photos' },
+    { label: uiText.nav.profile, to: '/profile' },
+    { label: uiText.nav.students, to: '/#students' },
+  ]
 
   useScrollReveal(`${location.pathname}${location.hash}`)
 
@@ -223,7 +187,7 @@ function App() {
   const [authToken, setAuthToken] = useState(() => window.localStorage.getItem(TOKEN_STORAGE_KEY) || '')
   const [students, setStudents] = useState([])
   const [adminStudents, setAdminStudents] = useState([])
-  const [siteContent, setSiteContent] = useState(() => normalizeSiteContent(defaultHomePageContent))
+  const [siteContentSource, setSiteContentSource] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
   const [authForm, setAuthForm] = useState({
     email: '',
@@ -247,6 +211,7 @@ function App() {
   const [deletingStudentId, setDeletingStudentId] = useState('')
   const [uploadingContentTarget, setUploadingContentTarget] = useState('')
 
+  const siteContent = normalizeSiteContent(siteContentSource, defaultHomePageContent)
   const heroSlides = siteContent.heroSlides.length ? siteContent.heroSlides : defaultHomePageContent.heroSlides
   const eventRows = siteContent.eventRows.length ? siteContent.eventRows : defaultHomePageContent.eventRows
   const directoryStudents = students.length ? students : placeholderStudents.map(normalizeStudent)
@@ -298,6 +263,11 @@ function App() {
   }, [authToken])
 
   useEffect(() => {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language)
+    document.documentElement.lang = language
+  }, [language])
+
+  useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? 'hidden' : ''
 
     return () => {
@@ -338,7 +308,7 @@ function App() {
 
         if (!isCancelled) {
           setStudents(nextStudents)
-          setSiteContent(nextSiteContent)
+          setSiteContentSource(nextSiteContent)
         }
 
         if (!authToken) {
@@ -406,8 +376,8 @@ function App() {
   }
 
   const currentStudentPage = Math.min(activeStudentPage, Math.max(studentPages.length - 1, 0))
-  const headerName = currentUser?.fullName || 'Guest student'
-  const headerAcademicYear = isAdmin ? 'Admin access' : currentUser?.academicYear || 'Log in to manage profile'
+  const headerName = currentUser?.fullName || uiText.header.guestStudent
+  const headerAcademicYear = isAdmin ? uiText.header.adminAccess : currentUser?.academicYear || uiText.header.manageProfilePrompt
 
   const handleMobileNavClose = () => {
     setIsMobileMenuOpen(false)
@@ -483,7 +453,7 @@ function App() {
       })
       setFeedback({
         type: 'success',
-        text: 'Logged in successfully.',
+        text: uiText.messages.loggedIn,
       })
       navigate(normalizedUser.role === 'admin' ? '/admin' : '/profile')
     } catch (error) {
@@ -497,7 +467,7 @@ function App() {
     event.preventDefault()
 
     if (!authToken) {
-      setFeedback({ type: 'error', text: 'Please log in to update your profile.' })
+      setFeedback({ type: 'error', text: uiText.messages.loginToUpdateProfile })
       return
     }
 
@@ -519,7 +489,7 @@ function App() {
         setAdminStudents(await fetchAdminStudents(authToken))
       }
       setProfileForm(createProfileForm(normalizedUser))
-      setFeedback({ type: 'success', text: 'Profile updated successfully.' })
+      setFeedback({ type: 'success', text: uiText.messages.profileUpdated })
     } catch (error) {
       setFeedback({ type: 'error', text: error.message })
     } finally {
@@ -535,7 +505,7 @@ function App() {
     }
 
     if (!authToken) {
-      setFeedback({ type: 'error', text: 'Please log in before uploading an avatar.' })
+      setFeedback({ type: 'error', text: uiText.messages.loginBeforeAvatar })
       event.target.value = ''
       return
     }
@@ -562,7 +532,7 @@ function App() {
         setAdminStudents(await fetchAdminStudents(authToken))
       }
       setProfileForm(createProfileForm(normalizedUser))
-      setFeedback({ type: 'success', text: 'Profile photo updated successfully.' })
+      setFeedback({ type: 'success', text: uiText.messages.profilePhotoUpdated })
     } catch (error) {
       setFeedback({ type: 'error', text: error.message })
     } finally {
@@ -582,7 +552,7 @@ function App() {
       password: '',
     })
     setPostForm({ caption: '' })
-    setFeedback({ type: 'success', text: 'You have been logged out.' })
+    setFeedback({ type: 'success', text: uiText.messages.loggedOut })
     setAdminFeedback({ type: '', text: '' })
   }
 
@@ -592,22 +562,22 @@ function App() {
     const imageFiles = Array.from(event.target.elements.namedItem('postImages')?.files || [])
 
     if (!authToken) {
-      setFeedback({ type: 'error', text: 'Please log in before creating a post.' })
+      setFeedback({ type: 'error', text: uiText.messages.loginBeforeCreatePost })
       return
     }
 
     if (!imageFiles.length) {
-      setFeedback({ type: 'error', text: 'Please choose at least one picture for the post.' })
+      setFeedback({ type: 'error', text: uiText.messages.chooseAtLeastOnePicture })
       return
     }
 
     if (imageFiles.length > 5) {
-      setFeedback({ type: 'error', text: 'You can upload up to 5 pictures in one post.' })
+      setFeedback({ type: 'error', text: uiText.messages.maxFivePictures })
       return
     }
 
     if (!postForm.caption.trim()) {
-      setFeedback({ type: 'error', text: 'Please add a caption for the post.' })
+      setFeedback({ type: 'error', text: uiText.messages.addCaption })
       return
     }
 
@@ -637,7 +607,7 @@ function App() {
       }
       setPostForm({ caption: '' })
       event.target.reset()
-      setFeedback({ type: 'success', text: 'Post published successfully.' })
+      setFeedback({ type: 'success', text: uiText.messages.postPublished })
     } catch (error) {
       setFeedback({ type: 'error', text: error.message })
     } finally {
@@ -647,14 +617,14 @@ function App() {
 
   const handlePostUpdate = async (postId, caption, imageUrls) => {
     if (!authToken) {
-      setFeedback({ type: 'error', text: 'Please log in before editing a post.' })
+      setFeedback({ type: 'error', text: uiText.messages.loginBeforeEditPost })
       return false
     }
 
     const nextCaption = String(caption || '').trim()
 
     if (!nextCaption) {
-      setFeedback({ type: 'error', text: 'Please add a caption for the post.' })
+      setFeedback({ type: 'error', text: uiText.messages.addCaption })
       return false
     }
 
@@ -675,7 +645,7 @@ function App() {
       if (normalizedUser.role === 'admin') {
         setAdminStudents(await fetchAdminStudents(authToken))
       }
-      setFeedback({ type: 'success', text: 'Post updated successfully.' })
+      setFeedback({ type: 'success', text: uiText.messages.postUpdated })
       return true
     } catch (error) {
       setFeedback({ type: 'error', text: error.message })
@@ -687,7 +657,7 @@ function App() {
 
   const handlePostDelete = async (postId) => {
     if (!authToken) {
-      setFeedback({ type: 'error', text: 'Please log in before deleting a post.' })
+      setFeedback({ type: 'error', text: uiText.messages.loginBeforeDeletePost })
       return false
     }
 
@@ -707,7 +677,7 @@ function App() {
       if (normalizedUser.role === 'admin') {
         setAdminStudents(await fetchAdminStudents(authToken))
       }
-      setFeedback({ type: 'success', text: 'Post deleted successfully.' })
+      setFeedback({ type: 'success', text: uiText.messages.postDeleted })
       return true
     } catch (error) {
       setFeedback({ type: 'error', text: error.message })
@@ -721,7 +691,7 @@ function App() {
     event.preventDefault()
 
     if (!authToken) {
-      setFeedback({ type: 'error', text: 'Please log in to change your password.' })
+      setFeedback({ type: 'error', text: uiText.messages.loginToChangePassword })
       return
     }
 
@@ -736,7 +706,7 @@ function App() {
       })
 
       setPasswordForm(createPasswordForm())
-      setFeedback({ type: 'success', text: payload.message || 'Password updated successfully.' })
+      setFeedback({ type: 'success', text: uiText.messages.passwordUpdated })
     } catch (error) {
       setFeedback({ type: 'error', text: error.message })
     } finally {
@@ -748,7 +718,7 @@ function App() {
     if (link.to === '/profile' || link.to === '/admin') {
       return (
         <NavLink
-          key={link.label}
+          key={link.to}
           to={link.to}
           className={({ isActive }) => (isActive ? `${className} is-current` : className)}
           onClick={onClick}
@@ -759,7 +729,7 @@ function App() {
     }
 
     return (
-      <Link key={link.label} to={link.to} className={className} onClick={onClick}>
+      <Link key={link.to} to={link.to} className={className} onClick={onClick}>
         {link.label}
       </Link>
     )
@@ -787,7 +757,7 @@ function App() {
 
       setStudents(nextStudents)
       setAdminStudents(nextAdminStudents)
-      setAdminFeedback({ type: 'success', text: 'Student account created successfully.' })
+      setAdminFeedback({ type: 'success', text: uiText.messages.studentCreated })
     } catch (error) {
       setAdminFeedback({ type: 'error', text: error.message })
     } finally {
@@ -817,7 +787,7 @@ function App() {
 
       setStudents(nextStudents)
       setAdminStudents(nextAdminStudents)
-      setAdminFeedback({ type: 'success', text: 'Student account updated successfully.' })
+      setAdminFeedback({ type: 'success', text: uiText.messages.studentUpdated })
     } catch (error) {
       setAdminFeedback({ type: 'error', text: error.message })
     } finally {
@@ -846,7 +816,7 @@ function App() {
 
       setStudents(nextStudents)
       setAdminStudents(nextAdminStudents)
-      setAdminFeedback({ type: 'success', text: 'Student account deleted successfully.' })
+      setAdminFeedback({ type: 'success', text: uiText.messages.studentDeleted })
     } catch (error) {
       setAdminFeedback({ type: 'error', text: error.message })
     } finally {
@@ -869,8 +839,8 @@ function App() {
         token: authToken,
       })
 
-      setSiteContent(normalizeSiteContent(payload.content))
-      setAdminFeedback({ type: 'success', text: 'Homepage content updated successfully.' })
+      setSiteContentSource(payload.content)
+      setAdminFeedback({ type: 'success', text: uiText.messages.homepageContentUpdated })
     } catch (error) {
       setAdminFeedback({ type: 'error', text: error.message })
     } finally {
@@ -898,8 +868,8 @@ function App() {
         isFormData: true,
       })
 
-      setSiteContent(normalizeSiteContent(payload.content))
-      setAdminFeedback({ type: 'success', text: 'Homepage image updated successfully.' })
+      setSiteContentSource(payload.content)
+      setAdminFeedback({ type: 'success', text: uiText.messages.homepageImageUpdated })
     } catch (error) {
       setAdminFeedback({ type: 'error', text: error.message })
     } finally {
@@ -908,18 +878,31 @@ function App() {
   }
 
   return (
-    <div className="figma-page">
+    <div className="figma-page" data-language={language}>
       <header className="site-header" data-reveal>
         <Link className="brand-mark" to="/#photos">
           <span className="brand-mark-primary">DEF</span>
-          <span className="brand-mark-secondary">Alumni</span>
+          <span className="brand-mark-secondary">{uiText.brandSecondary}</span>
         </Link>
 
-        <nav className="site-nav" aria-label="Primary navigation">
+        <nav className="site-nav" aria-label={uiText.header.primaryNavigation}>
           {navLinks.map((link) => renderNavigationLink(link, 'site-nav-link'))}
         </nav>
 
         <div className="header-actions">
+          <div className="language-switch" role="group" aria-label={uiText.common.languageAriaLabel}>
+            {supportedLanguages.map((option) => (
+              <button
+                key={option.code}
+                type="button"
+                className={language === option.code ? 'language-option is-active' : 'language-option'}
+                onClick={() => setLanguage(option.code)}
+              >
+                {option.shortLabel}
+              </button>
+            ))}
+          </div>
+
           <Link className="profile-summary-link" to="/profile">
             <div className="profile-summary">
               <div>
@@ -942,7 +925,7 @@ function App() {
           <button
             type="button"
             className={isMobileMenuOpen ? 'menu-toggle is-open' : 'menu-toggle'}
-            aria-label="Toggle navigation menu"
+            aria-label={uiText.header.toggleNavigation}
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-navigation"
             onClick={() => setIsMobileMenuOpen((currentState) => !currentState)}
@@ -963,11 +946,11 @@ function App() {
       <aside
         id="mobile-navigation"
         className={isMobileMenuOpen ? 'mobile-sidebar is-open' : 'mobile-sidebar'}
-        aria-label="Mobile navigation"
+        aria-label={uiText.header.mobileNavigation}
       >
         <div className="mobile-sidebar-header">
-          <strong>Menu</strong>
-          <button type="button" className="mobile-close" aria-label="Close navigation menu" onClick={handleMobileNavClose}>
+          <strong>{uiText.header.menu}</strong>
+          <button type="button" className="mobile-close" aria-label={uiText.header.closeNavigation} onClick={handleMobileNavClose}>
             x
           </button>
         </div>
@@ -992,6 +975,9 @@ function App() {
               onStudentsTouchEnd={handleStudentsTouchEnd}
               onStudentPageChange={setActiveStudentPage}
               eventRows={eventRows}
+              text={uiText.home}
+              carouselText={uiText.carousel}
+              dateLocale={dateLocale}
             />
           }
         />
@@ -1025,6 +1011,9 @@ function App() {
               onLogout={handleLogout}
               isLoadingSession={isLoadingSession}
               feedback={feedback}
+              text={uiText.profile}
+              carouselText={uiText.carousel}
+              dateLocale={dateLocale}
             />
           }
         />
@@ -1046,10 +1035,12 @@ function App() {
               onDeleteStudent={handleAdminStudentDelete}
               onSaveSiteContent={handleSiteContentSave}
               onUploadSiteImage={handleSiteImageUpload}
+              text={uiText.admin}
+              commonText={uiText.common}
             />
           }
         />
-        <Route path="/students/:studentId" element={<StudentProfilePage currentUser={currentUser} />} />
+        <Route path="/students/:studentId" element={<StudentProfilePage currentUser={currentUser} text={uiText.studentProfile} carouselText={uiText.carousel} dateLocale={dateLocale} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 

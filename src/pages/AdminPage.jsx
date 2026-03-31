@@ -39,6 +39,8 @@ function AdminPage({
   onDeleteStudent,
   onSaveSiteContent,
   onUploadSiteImage,
+  text,
+  commonText,
 }) {
   const [activePanel, setActivePanel] = useState('students')
   const [selectedStudentId, setSelectedStudentId] = useState('')
@@ -103,7 +105,7 @@ function AdminPage({
   }
 
   const handleStudentDelete = async (student) => {
-    const confirmed = window.confirm(`Delete ${student.fullName}? This will remove the student account and uploaded images.`)
+    const confirmed = window.confirm(text.deleteStudentConfirm(student.fullName))
 
     if (!confirmed) {
       return
@@ -121,7 +123,7 @@ function AdminPage({
     return (
       <main className="page-layout admin-page-layout">
         <section className="admin-shell" data-reveal>
-          <p className="loading-note">Loading admin session...</p>
+          <p className="loading-note">{text.loading}</p>
         </section>
       </main>
     )
@@ -131,11 +133,11 @@ function AdminPage({
     return (
       <main className="page-layout admin-page-layout">
         <section className="admin-shell admin-empty-state" data-reveal>
-          <p className="section-kicker">Admin panel</p>
-          <h1>Login required</h1>
-          <p>Sign in with an admin account to manage students and update the homepage content.</p>
+          <p className="section-kicker">{text.panel}</p>
+          <h1>{text.loginRequired}</h1>
+          <p>{text.loginRequiredCopy}</p>
           <Link className="primary-action profile-nav-action" to="/profile">
-            Go to login
+            {text.goToLogin}
           </Link>
         </section>
       </main>
@@ -146,11 +148,11 @@ function AdminPage({
     return (
       <main className="page-layout admin-page-layout">
         <section className="admin-shell admin-empty-state" data-reveal>
-          <p className="section-kicker">Admin panel</p>
-          <h1>Access denied</h1>
-          <p>This account can edit its own profile, but it does not have admin permission to manage students or homepage content.</p>
+          <p className="section-kicker">{text.panel}</p>
+          <h1>{text.accessDenied}</h1>
+          <p>{text.accessDeniedCopy}</p>
           <Link className="secondary-action profile-nav-action" to="/">
-            Return to homepage
+            {text.returnHome}
           </Link>
         </section>
       </main>
@@ -162,36 +164,36 @@ function AdminPage({
       <section className="admin-shell" data-reveal style={{ '--reveal-delay': '60ms' }}>
         <aside className="admin-sidebar">
           <div className="admin-sidebar-copy">
-            <p className="section-kicker">Admin panel</p>
-            <h1>Manage students and homepage content</h1>
-            <p>Create student accounts, update existing profiles, and manage the pictures and descriptions shown on the public website.</p>
+            <p className="section-kicker">{text.panel}</p>
+            <h1>{text.manageTitle}</h1>
+            <p>{text.manageCopy}</p>
           </div>
 
           <div className="admin-sidebar-stats">
             <article>
               <strong>{students.length}</strong>
-              <span>Student records</span>
+              <span>{text.studentRecords}</span>
             </article>
             <article>
               <strong>{siteContent.heroSlides.length + siteContent.eventRows.length}</strong>
-              <span>Homepage media blocks</span>
+              <span>{text.homepageMediaBlocks}</span>
             </article>
           </div>
 
-          <div className="admin-sidebar-nav" role="tablist" aria-label="Admin sections">
+          <div className="admin-sidebar-nav" role="tablist" aria-label={text.adminSections}>
             <button
               type="button"
               className={activePanel === 'students' ? 'admin-nav-button active' : 'admin-nav-button'}
               onClick={() => setActivePanel('students')}
             >
-              Student CRUD
+              {text.studentCrud}
             </button>
             <button
               type="button"
               className={activePanel === 'content' ? 'admin-nav-button active' : 'admin-nav-button'}
               onClick={() => setActivePanel('content')}
             >
-              Homepage content
+              {text.homepageContent}
             </button>
           </div>
         </aside>
@@ -206,12 +208,12 @@ function AdminPage({
               <article className="account-card admin-card">
                 <div className="admin-card-heading">
                   <div>
-                    <p className="section-kicker">Student form</p>
-                    <h2>{selectedStudentId ? 'Update student' : 'Create student'}</h2>
+                    <p className="section-kicker">{text.studentForm}</p>
+                    <h2>{selectedStudentId ? text.updateStudent : text.createStudent}</h2>
                   </div>
                   {selectedStudentId ? (
                     <button type="button" className="secondary-action" onClick={() => setSelectedStudentId('')}>
-                      Create new instead
+                      {text.createNewInstead}
                     </button>
                   ) : null}
                 </div>
@@ -219,102 +221,102 @@ function AdminPage({
                 <form className="account-form" onSubmit={handleStudentSubmit}>
                   <div className="form-columns">
                     <label>
-                      Full name
+                      {text.fullName}
                       <input
                         type="text"
                         value={studentForm.fullName}
                         onChange={(event) => handleStudentFieldChange('fullName', event.target.value)}
-                        placeholder="Student full name"
+                        placeholder={text.fullNamePlaceholder}
                       />
                     </label>
 
                     <label>
-                      Email address
+                      {text.emailAddress}
                       <input
                         type="email"
                         value={studentForm.email}
                         onChange={(event) => handleStudentFieldChange('email', event.target.value)}
-                        placeholder="student@def.edu"
+                        placeholder={text.emailPlaceholder}
                       />
                     </label>
                   </div>
 
                   <div className="form-columns">
                     <label>
-                      Password {selectedStudentId ? '(optional)' : ''}
+                      {selectedStudentId ? text.passwordOptional : text.password}
                       <input
                         type="password"
                         value={studentForm.password}
                         onChange={(event) => handleStudentFieldChange('password', event.target.value)}
-                        placeholder={selectedStudentId ? 'Leave blank to keep current password' : 'Minimum 6 characters'}
+                        placeholder={selectedStudentId ? text.leaveBlankPassword : text.minimumPassword}
                       />
                     </label>
 
                     <label>
-                      Role
+                      {text.role}
                       <select value={studentForm.role} onChange={(event) => handleStudentFieldChange('role', event.target.value)}>
-                        <option value="student">Student</option>
-                        <option value="admin">Admin</option>
+                        <option value="student">{text.studentRole}</option>
+                        <option value="admin">{text.adminRole}</option>
                       </select>
                     </label>
                   </div>
 
                   <div className="form-columns">
                     <label>
-                      Academic year
+                      {text.academicYear}
                       <input
                         type="text"
                         value={studentForm.academicYear}
                         onChange={(event) => handleStudentFieldChange('academicYear', event.target.value)}
-                        placeholder="2025-2026"
+                        placeholder={text.academicYearPlaceholder}
                       />
                     </label>
 
                     <label>
-                      Location
+                      {text.location}
                       <input
                         type="text"
                         value={studentForm.location}
                         onChange={(event) => handleStudentFieldChange('location', event.target.value)}
-                        placeholder="City or campus"
+                        placeholder={text.locationPlaceholder}
                       />
                     </label>
                   </div>
 
                   <div className="form-columns">
                     <label>
-                      Major 1
+                      {text.major1}
                       <input
                         type="text"
                         value={studentForm.major1}
                         onChange={(event) => handleStudentFieldChange('major1', event.target.value)}
-                        placeholder="Primary major"
+                        placeholder={text.major1Placeholder}
                       />
                     </label>
 
                     <label>
-                      Major 2
+                      {text.major2}
                       <input
                         type="text"
                         value={studentForm.major2}
                         onChange={(event) => handleStudentFieldChange('major2', event.target.value)}
-                        placeholder="Secondary major"
+                        placeholder={text.major2Placeholder}
                       />
                     </label>
                   </div>
 
                   <label>
-                    Bio
+                    {text.bio}
                     <textarea
                       rows="5"
                       value={studentForm.bio}
                       onChange={(event) => handleStudentFieldChange('bio', event.target.value)}
-                      placeholder="Short introduction for the public profile"
+                      placeholder={text.bioPlaceholder}
                     />
                   </label>
 
                   <button className="primary-action" type="submit" disabled={isSavingStudent}>
-                    {isSavingStudent ? 'Saving...' : selectedStudentId ? 'Update student' : 'Create student'}
+                    {isSavingStudent ? text.saving : selectedStudentId ? text.updateStudent : text.createStudent}
                   </button>
                 </form>
               </article>
@@ -322,8 +324,8 @@ function AdminPage({
               <article className="account-card admin-card">
                 <div className="admin-card-heading">
                   <div>
-                    <p className="section-kicker">Directory</p>
-                    <h2>Existing students</h2>
+                    <p className="section-kicker">{text.directory}</p>
+                    <h2>{text.existingStudents}</h2>
                   </div>
                 </div>
 
@@ -335,13 +337,13 @@ function AdminPage({
                         <span>{student.email}</span>
                         <div className="admin-student-meta">
                           <span>{student.academicYear}</span>
-                          <span>{student.role}</span>
+                          <span>{text.roleLabel(student.role)}</span>
                         </div>
                       </div>
 
                       <div className="admin-student-actions">
                         <button type="button" className="secondary-action" onClick={() => setSelectedStudentId(student.id)}>
-                          Edit
+                          {text.edit}
                         </button>
                         <button
                           type="button"
@@ -349,11 +351,11 @@ function AdminPage({
                           onClick={() => handleStudentDelete(student)}
                           disabled={deletingStudentId === student.id}
                         >
-                          {deletingStudentId === student.id ? 'Deleting...' : 'Delete'}
+                          {deletingStudentId === student.id ? text.deleting : text.delete}
                         </button>
                       </div>
                     </article>
-                  )) : <p className="loading-note">No students have been created yet.</p>}
+                  )) : <p className="loading-note">{text.noStudents}</p>}
                 </div>
               </article>
             </div>
@@ -361,8 +363,8 @@ function AdminPage({
             <article className="account-card admin-card">
               <div className="admin-card-heading">
                 <div>
-                  <p className="section-kicker">Homepage editor</p>
-                  <h2>Manage public images and descriptions</h2>
+                  <p className="section-kicker">{text.homepageEditor}</p>
+                  <h2>{text.managePublicContent}</h2>
                 </div>
               </div>
 
@@ -371,19 +373,19 @@ function AdminPage({
                 onSaveSiteContent(siteDraft)
               }}>
                 <div className="admin-content-section">
-                  <h3>Hero slides</h3>
+                  <h3>{text.heroSlides}</h3>
                   {siteDraft.heroSlides.map((slide, index) => {
                     const uploadKey = `heroSlides:${slide.id}`
 
                     return (
                       <fieldset key={slide.id} className="admin-media-card">
-                        <legend>Slide {index + 1}</legend>
+                        <legend>{text.slide(index + 1)}</legend>
                         <div className="admin-media-preview">
-                          {slide.imageUrl ? <img src={getAssetUrl(slide.imageUrl)} alt={slide.caption} /> : <span>No image uploaded</span>}
+                          {slide.imageUrl ? <img src={getAssetUrl(slide.imageUrl)} alt={slide.caption} /> : <span>{commonText.noImageUploaded}</span>}
                         </div>
                         <div className="form-columns">
                           <label>
-                            Caption
+                            {text.caption}
                             <input
                               type="text"
                               value={slide.caption}
@@ -391,7 +393,7 @@ function AdminPage({
                             />
                           </label>
                           <label>
-                            Title
+                            {text.title}
                             <input
                               type="text"
                               value={slide.title}
@@ -400,7 +402,7 @@ function AdminPage({
                           </label>
                         </div>
                         <label>
-                          Subtitle
+                          {text.subtitle}
                           <textarea
                             rows="4"
                             value={slide.subtitle}
@@ -408,7 +410,7 @@ function AdminPage({
                           />
                         </label>
                         <label className="secondary-action upload-action admin-upload-action">
-                          {uploadingContentTarget === uploadKey ? 'Uploading...' : 'Upload slide image'}
+                          {uploadingContentTarget === uploadKey ? text.uploading : text.uploadSlideImage}
                           <input
                             type="file"
                             accept="image/*"
@@ -428,18 +430,18 @@ function AdminPage({
                 </div>
 
                 <div className="admin-content-section">
-                  <h3>Event rows</h3>
+                  <h3>{text.eventRows}</h3>
                   {siteDraft.eventRows.map((eventRow, index) => {
                     const uploadKey = `eventRows:${eventRow.id}`
 
                     return (
                       <fieldset key={eventRow.id} className="admin-media-card">
-                        <legend>Event row {index + 1}</legend>
+                        <legend>{text.eventRow(index + 1)}</legend>
                         <div className="admin-media-preview landscape">
-                          {eventRow.imageUrl ? <img src={getAssetUrl(eventRow.imageUrl)} alt={eventRow.description} /> : <span>No image uploaded</span>}
+                          {eventRow.imageUrl ? <img src={getAssetUrl(eventRow.imageUrl)} alt={eventRow.description} /> : <span>{commonText.noImageUploaded}</span>}
                         </div>
                         <label>
-                          Description
+                          {text.description}
                           <textarea
                             rows="4"
                             value={eventRow.description}
@@ -447,7 +449,7 @@ function AdminPage({
                           />
                         </label>
                         <label className="secondary-action upload-action admin-upload-action">
-                          {uploadingContentTarget === uploadKey ? 'Uploading...' : 'Upload event image'}
+                          {uploadingContentTarget === uploadKey ? text.uploading : text.uploadEventImage}
                           <input
                             type="file"
                             accept="image/*"
@@ -467,10 +469,10 @@ function AdminPage({
                 </div>
 
                 <div className="admin-content-section">
-                  <h3>Footer copy</h3>
+                  <h3>{text.footerCopy}</h3>
                   <div className="form-columns">
                     <label>
-                      Footer title
+                      {text.footerTitle}
                       <input
                         type="text"
                         value={siteDraft.footer.title}
@@ -478,7 +480,7 @@ function AdminPage({
                       />
                     </label>
                     <label>
-                      Footer description
+                      {text.footerDescription}
                       <textarea
                         rows="4"
                         value={siteDraft.footer.description}
@@ -489,7 +491,7 @@ function AdminPage({
                 </div>
 
                 <button className="primary-action" type="submit" disabled={isSavingSiteContent}>
-                  {isSavingSiteContent ? 'Saving...' : 'Save homepage content'}
+                  {isSavingSiteContent ? text.saving : text.saveHomepageContent}
                 </button>
               </form>
             </article>

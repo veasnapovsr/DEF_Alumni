@@ -13,6 +13,8 @@ function HomePage({
   onStudentsTouchEnd,
   onStudentPageChange,
   eventRows,
+  text,
+  carouselText,
 }) {
   return (
     <main className="page-layout">
@@ -41,14 +43,14 @@ function HomePage({
           </div>
         </div>
 
-        <div className="section-pager" aria-label="Photo slides">
+        <div className="section-pager" aria-label={text.photoSlides}>
           {heroSlides.map((slide, index) => (
             <button
               key={slide.id}
               type="button"
               className={index === activeSlide ? 'pager-dot active' : 'pager-dot'}
               onClick={() => onSlideChange(index)}
-              aria-label={`Show slide ${index + 1}`}
+              aria-label={text.showSlide(index + 1)}
             >
               {index + 1}
             </button>
@@ -58,7 +60,7 @@ function HomePage({
 
       <section className="students-panel" id="students" data-reveal style={{ '--reveal-delay': '120ms' }}>
         <div className="panel-heading centered">
-          <h2>Students</h2>
+          <h2>{text.students}</h2>
         </div>
 
         <div className="students-viewport" onTouchStart={onStudentsTouchStart} onTouchEnd={onStudentsTouchEnd}>
@@ -73,7 +75,7 @@ function HomePage({
                   <article key={student.id} className="student-card">
                     <div className="student-avatar" aria-hidden="true">
                       {student.avatarUrl ? (
-                        <img className="avatar-image" src={getAssetUrl(student.avatarUrl)} alt={`${student.fullName} avatar`} />
+                        <img className="avatar-image" src={getAssetUrl(student.avatarUrl)} alt={text.avatarAlt(student.fullName)} />
                       ) : (
                         <>
                           <span className="student-avatar-head" />
@@ -84,21 +86,21 @@ function HomePage({
 
                     <dl className="student-details">
                       <div>
-                        <dt>Name :</dt>
+                        <dt>{text.name} :</dt>
                         <dd>{student.fullName}</dd>
                       </div>
                       <div>
-                        <dt>Major 1 :</dt>
-                        <dd>{student.major1}</dd>
+                        <dt>{text.major1} :</dt>
+                        <dd>{student.major1 || '-'}</dd>
                       </div>
                       <div>
-                        <dt>Major 2 :</dt>
-                        <dd>{student.major2}</dd>
+                        <dt>{text.major2} :</dt>
+                        <dd>{student.major2 || '-'}</dd>
                       </div>
                     </dl>
 
                     <Link className="profile-link" to={`/students/${student.id}`}>
-                      view profile page
+                      {text.viewProfilePage}
                     </Link>
                   </article>
                 ))}
@@ -107,14 +109,14 @@ function HomePage({
           </div>
         </div>
 
-        <div className="section-pager" aria-label="Students pages">
+        <div className="section-pager" aria-label={text.studentsPages}>
           {studentPages.map((_, index) => (
             <button
               key={`students-page-${index + 1}`}
               type="button"
               className={index === currentStudentPage ? 'pager-dot active' : 'pager-dot'}
               onClick={() => onStudentPageChange(index)}
-              aria-label={`Show student group ${index + 1}`}
+              aria-label={text.showStudentGroup(index + 1)}
             >
               {index + 1}
             </button>
@@ -125,8 +127,8 @@ function HomePage({
       <section className="student-highlights-panel" data-reveal style={{ '--reveal-delay': '160ms' }}>
         <div className="panel-heading centered">
           <div className="student-highlights-heading-block">
-            <p className="section-kicker">Spotlight</p>
-            <h2>Student Highlights</h2>
+            <p className="section-kicker">{text.spotlight}</p>
+            <h2>{text.studentHighlights}</h2>
           </div>
         </div>
 
@@ -142,43 +144,44 @@ function HomePage({
                     <img
                       className="student-highlight-photo"
                       src={getAssetUrl(student.imageUrl)}
-                      alt={`${student.fullName} gallery highlight`}
+                      alt={text.galleryHighlightAlt(student.fullName)}
                     />
                   </div>
                   <div className="student-highlight-profilecopy">
                     <strong>{student.fullName}</strong>
-                    <small>{student.totalPhotos} photo{student.totalPhotos > 1 ? 's' : ''} in gallery</small>
+                    <small>{text.galleryPhotos(student.totalPhotos)}</small>
                   </div>
                   <Link className="student-highlight-profilelink" to={`/students/${student.studentId}`}>
-                    View profile
+                    {text.viewProfile}
                   </Link>
                 </div>
 
                 <div className="student-highlight-media-shell">
                   <PostImageCarousel
                     post={{ id: student.id, imageUrls: student.imageUrls }}
-                    altText={`${student.fullName} gallery highlight`}
+                    altText={text.galleryHighlightAlt(student.fullName)}
                     imageClassName="student-highlight-photo student-highlight-photo-main"
                     intervalMs={2600}
+                    labels={carouselText}
                   />
                 </div>
 
                 <div className="student-highlight-copy student-highlight-copy-static">
-                  <span>{student.caption || 'Shared from student gallery.'}</span>
+                  <span>{student.caption || text.sharedFromGallery}</span>
                 </div>
               </article>
             ))}
           </div>
         ) : (
           <div className="student-highlights-empty">
-            <p>No gallery photos have been shared yet.</p>
+            <p>{text.noGalleryPhotos}</p>
           </div>
         )}
       </section>
 
       <section className="events-panel" id="events" data-reveal style={{ '--reveal-delay': '180ms' }}>
         <div className="panel-heading centered">
-          <h2>Events</h2>
+          <h2>{text.events}</h2>
         </div>
 
         <div className="events-list">

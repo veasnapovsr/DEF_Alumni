@@ -4,7 +4,7 @@ import PostImageCarousel from '../components/PostImageCarousel'
 import { apiRequest, getAssetUrl } from '../utils/api'
 import { getPostImageUrls, normalizePostMediaCollection } from '../utils/postMedia'
 
-function buildProfileStats(student) {
+function buildProfileStats(student, text) {
   if (!student) {
     return []
   }
@@ -16,14 +16,14 @@ function buildProfileStats(student) {
   const postCount = student.posts?.length || 0
 
   return [
-    { label: 'Majors', value: student.major2 ? '2' : '1' },
-    { label: 'Posts', value: `${postCount}` },
-    { label: 'Profile score', value: `${Math.min(completionScore * 15, 99)}%` },
-    { label: 'Bio words', value: `${Math.max(1, Math.round(bioLength / 5))}` },
+    { label: text.majors, value: student.major2 ? '2' : '1' },
+    { label: text.posts, value: `${postCount}` },
+    { label: text.profileScore, value: `${Math.min(completionScore * 15, 99)}%` },
+    { label: text.bioWords, value: `${Math.max(1, Math.round(bioLength / 5))}` },
   ]
 }
 
-function StudentProfilePage({ currentUser }) {
+function StudentProfilePage({ currentUser, text, carouselText, dateLocale }) {
   const { studentId } = useParams()
   const [student, setStudent] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -64,14 +64,14 @@ function StudentProfilePage({ currentUser }) {
     }
   }, [studentId])
 
-  const profileStats = useMemo(() => buildProfileStats(student), [student])
+  const profileStats = useMemo(() => buildProfileStats(student, text), [student, text])
   const isOwnProfile = currentUser?.id && student?.id === currentUser.id
 
   if (isLoading) {
     return (
       <main className="page-layout student-profile-layout">
         <section className="student-profile-shell" data-reveal>
-          <p className="loading-note">Loading student profile...</p>
+          <p className="loading-note">{text.loading}</p>
         </section>
       </main>
     )
@@ -82,11 +82,11 @@ function StudentProfilePage({ currentUser }) {
       <main className="page-layout student-profile-layout">
         <section className="student-profile-shell" data-reveal>
           <div className="student-profile-empty">
-            <p className="section-kicker">Student profile</p>
-            <h1>Profile not found</h1>
-            <p>{errorMessage || 'This student profile does not exist or is no longer available.'}</p>
+            <p className="section-kicker">{text.kicker}</p>
+            <h1>{text.notFound}</h1>
+            <p>{errorMessage || text.notFoundCopy}</p>
             <Link className="secondary-action profile-nav-action" to="/#students">
-              Back to students
+              {text.backToStudents}
             </Link>
           </div>
         </section>
@@ -103,7 +103,7 @@ function StudentProfilePage({ currentUser }) {
           <div className="student-profile-avatar-wrap">
             <div className="student-profile-avatar" aria-hidden="true">
               {student.avatarUrl ? (
-                <img className="avatar-image" src={getAssetUrl(student.avatarUrl)} alt={`${student.fullName} profile`} />
+                <img className="avatar-image" src={getAssetUrl(student.avatarUrl)} alt={text.profileAlt(student.fullName)} />
               ) : (
                 <div className="student-profile-avatar-fallback">
                   <span className="student-avatar-head" />
@@ -116,16 +116,16 @@ function StudentProfilePage({ currentUser }) {
           <div className="student-profile-intro">
             <div className="student-profile-topline">
               <div>
-                <p className="section-kicker">Student profile</p>
+                <p className="section-kicker">{text.kicker}</p>
                 <h1>{student.fullName}</h1>
               </div>
               <div className="student-profile-actions">
                 <Link className="secondary-action profile-nav-action" to="/#students">
-                  Back to students
+                  {text.backToStudents}
                 </Link>
                 {isOwnProfile ? (
                   <Link className="primary-action profile-nav-action" to="/profile">
-                    Edit my portal
+                    {text.editMyPortal}
                   </Link>
                 ) : null}
               </div>
@@ -133,7 +133,7 @@ function StudentProfilePage({ currentUser }) {
 
             <div className="student-profile-meta">
               <span>{student.academicYear}</span>
-              <span>{student.location || 'Department of French'}</span>
+              <span>{student.location || text.defaultLocation}</span>
             </div>
 
             <div className="student-profile-stats">
@@ -149,49 +149,49 @@ function StudentProfilePage({ currentUser }) {
 
         <div className="student-profile-grid">
           <article className="student-profile-card student-profile-bio">
-            <p className="section-kicker">About</p>
-            <h2>Bio</h2>
-            <p>{student.bio || 'This student has not added a bio yet.'}</p>
+            <p className="section-kicker">{text.about}</p>
+            <h2>{text.bio}</h2>
+            <p>{student.bio || text.noBio}</p>
           </article>
 
           <article className="student-profile-card">
-            <p className="section-kicker">Academics</p>
-            <h2>Study focus</h2>
+            <p className="section-kicker">{text.academics}</p>
+            <h2>{text.studyFocus}</h2>
             <dl className="student-profile-list">
               <div>
-                <dt>Major 1</dt>
-                <dd>{student.major1}</dd>
+                <dt>{text.major1}</dt>
+                <dd>{student.major1 || text.missingMajor}</dd>
               </div>
               <div>
-                <dt>Major 2</dt>
-                <dd>{student.major2}</dd>
+                <dt>{text.major2}</dt>
+                <dd>{student.major2 || text.missingMajor}</dd>
               </div>
               <div>
-                <dt>Academic year</dt>
+                <dt>{text.academicYear}</dt>
                 <dd>{student.academicYear}</dd>
               </div>
             </dl>
           </article>
 
           <article className="student-profile-card student-profile-highlights">
-            <p className="section-kicker">Highlights</p>
-            <h2>Portal snapshot</h2>
+            <p className="section-kicker">{text.highlights}</p>
+            <h2>{text.portalSnapshot}</h2>
             <div className="student-highlight-grid">
               <div>
-                <span>Location</span>
-                <strong>{student.location || 'Not added yet'}</strong>
+                <span>{text.location}</span>
+                <strong>{student.location || text.notAddedYet}</strong>
               </div>
               <div>
-                <span>Directory status</span>
-                <strong>Visible</strong>
+                <span>{text.directoryStatus}</span>
+                <strong>{text.visible}</strong>
               </div>
               <div>
-                <span>Photo</span>
-                <strong>{student.avatarUrl ? 'Uploaded' : 'Placeholder'}</strong>
+                <span>{text.photo}</span>
+                <strong>{student.avatarUrl ? text.uploaded : text.placeholder}</strong>
               </div>
               <div>
-                <span>Community</span>
-                <strong>DEF Student</strong>
+                <span>{text.community}</span>
+                <strong>{text.communityValue}</strong>
               </div>
             </div>
           </article>
@@ -200,10 +200,10 @@ function StudentProfilePage({ currentUser }) {
         <section className="student-posts-section">
           <div className="student-posts-heading">
             <div>
-              <p className="section-kicker">Photos</p>
-              <h2>Post gallery</h2>
+              <p className="section-kicker">{text.photos}</p>
+              <h2>{text.postGallery}</h2>
             </div>
-            <p>{student.posts?.length ? 'Shared pictures with caption descriptions.' : 'No posts have been shared yet.'}</p>
+            <p>{student.posts?.length ? text.sharedPictures : text.noPostsShared}</p>
           </div>
 
           {student.posts?.length ? (
@@ -213,13 +213,14 @@ function StudentProfilePage({ currentUser }) {
                   <div className="student-post-image-wrap">
                     <PostImageCarousel
                       post={post}
-                      altText={post.caption || `${student.fullName} post`}
+                      altText={post.caption || text.postAlt(student.fullName)}
                       imageClassName="student-post-image"
+                      labels={carouselText}
                     />
                   </div>
                   <div className="student-post-meta">
-                    <span>{getPostImageUrls(post).length} photos</span>
-                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                    <span>{text.photoCount(getPostImageUrls(post).length)}</span>
+                    <span>{new Date(post.createdAt).toLocaleDateString(dateLocale)}</span>
                   </div>
                   <p>{post.caption}</p>
                 </article>
@@ -227,7 +228,7 @@ function StudentProfilePage({ currentUser }) {
             </div>
           ) : (
             <div className="student-post-empty">
-              <p>This student has not posted photos yet.</p>
+              <p>{text.noPhotosYet}</p>
             </div>
           )}
         </section>

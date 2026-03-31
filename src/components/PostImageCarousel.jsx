@@ -2,7 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { getAssetUrl } from '../utils/api'
 import { getPostImageUrls } from '../utils/postMedia'
 
-function PostImageCarousel({ post, altText, imageClassName = '', autoPlay = true, intervalMs = 3200 }) {
+const defaultLabels = {
+  previousPhoto: 'Show previous photo',
+  nextPhoto: 'Show next photo',
+  photoNavigation: 'Post photo navigation',
+  showPhoto: (index) => `Show photo ${index}`,
+  postImageAlt: (index) => `Post image ${index}`,
+}
+
+function PostImageCarousel({ post, altText, imageClassName = '', autoPlay = true, intervalMs = 3200, labels = defaultLabels }) {
   const imageUrls = getPostImageUrls(post)
   const touchStartX = useRef(0)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -70,7 +78,7 @@ function PostImageCarousel({ post, altText, imageClassName = '', autoPlay = true
               key={`${post?.id || 'post'}-${imageUrl}-${index}`}
               className={`post-image-carousel-image ${imageClassName}`.trim()}
               src={getAssetUrl(imageUrl)}
-              alt={altText || `Post image ${index + 1}`}
+              alt={altText || labels.postImageAlt(index + 1)}
             />
           ))}
         </div>
@@ -78,21 +86,21 @@ function PostImageCarousel({ post, altText, imageClassName = '', autoPlay = true
 
       {imageUrls.length > 1 ? (
         <>
-          <button type="button" className="post-image-carousel-nav is-prev" onClick={goToPrevious} aria-label="Show previous photo">
+          <button type="button" className="post-image-carousel-nav is-prev" onClick={goToPrevious} aria-label={labels.previousPhoto}>
             ‹
           </button>
-          <button type="button" className="post-image-carousel-nav is-next" onClick={goToNext} aria-label="Show next photo">
+          <button type="button" className="post-image-carousel-nav is-next" onClick={goToNext} aria-label={labels.nextPhoto}>
             ›
           </button>
 
-          <div className="post-image-carousel-dots" aria-label="Post photo navigation">
+          <div className="post-image-carousel-dots" aria-label={labels.photoNavigation}>
             {imageUrls.map((imageUrl, index) => (
               <button
                 key={`${post?.id || 'post'}-dot-${imageUrl}-${index}`}
                 type="button"
                 className={index === activeIndex ? 'post-image-carousel-dot is-active' : 'post-image-carousel-dot'}
                 onClick={() => goToSlide(index)}
-                aria-label={`Show photo ${index + 1}`}
+                aria-label={labels.showPhoto(index + 1)}
               />
             ))}
           </div>

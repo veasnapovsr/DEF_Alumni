@@ -1,10 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanuman:wght@100;300;400;700;900&display=swap');
+
 :root {
   font-family: var(--font-body);
   line-height: 1.5;
   font-weight: 400;
   color: #13213c;
-  --font-display: Cambria, 'Palatino Linotype', 'Book Antiqua', serif;
-  --font-body: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --font-display: 'Hanuman', Cambria, 'Palatino Linotype', 'Book Antiqua', serif;
+  --font-body: 'Hanuman', 'Segoe UI', sans-serif;
   --brand-blue: #0055a4;
   --brand-blue-deep: #0f2d62;
   --brand-red: #ef4135;
@@ -51,7 +53,8 @@ a {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 

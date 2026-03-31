@@ -31,6 +31,9 @@ function ProfilePage({
   onLogout,
   isLoadingSession,
   feedback,
+  text,
+  carouselText,
+  dateLocale,
 }) {
   const isAdmin = currentUser?.role === 'admin'
   const [editingPostId, setEditingPostId] = useState('')
@@ -74,7 +77,7 @@ function ProfilePage({
   }
 
   const handleDeleteClick = async (postId) => {
-    const shouldDelete = window.confirm('Delete this post and all of its photos?')
+    const shouldDelete = window.confirm(text.deletePostConfirm)
 
     if (!shouldDelete) {
       return
@@ -91,24 +94,21 @@ function ProfilePage({
     <main className="page-layout profile-page-layout">
       <section className="profile-page-hero" data-reveal style={{ '--reveal-delay': '60ms' }}>
         <div className="profile-page-copy">
-          <p className="section-kicker">Profile page</p>
-          <h1>{currentUser ? 'Your DEF portal account' : 'Student profile access'}</h1>
-          <p>
-            This page is dedicated to account access and profile management. Students can log in,
-            upload a picture, and edit the information that appears in the public student directory.
-          </p>
+          <p className="section-kicker">{text.pageKicker}</p>
+          <h1>{currentUser ? text.heroLoggedInTitle : text.heroLoggedOutTitle}</h1>
+          <p>{text.heroCopy}</p>
         </div>
 
         <div className="profile-page-actions">
           <Link className="secondary-action profile-nav-action" to="/#students">
-            Back to students
+            {text.backToStudents}
           </Link>
           <Link className="secondary-action profile-nav-action" to="/#events">
-            View server features
+            {text.viewServerFeatures}
           </Link>
           {isAdmin ? (
             <Link className="primary-action profile-nav-action" to="/admin">
-              Open admin panel
+              {text.openAdminPanel}
             </Link>
           ) : null}
         </div>
@@ -117,10 +117,10 @@ function ProfilePage({
       <section className="account-panel" data-reveal style={{ '--reveal-delay': '120ms' }}>
         <div className="panel-heading account-heading">
           <div>
-            <p className="section-kicker">Account portal</p>
-            <h2>{currentUser ? 'Manage your student profile' : 'Log in to your account'}</h2>
+            <p className="section-kicker">{text.accountPortal}</p>
+            <h2>{currentUser ? text.manageStudentProfile : text.loginToAccount}</h2>
           </div>
-          <p className="account-copy">Students can log in, upload a profile picture, and update personal information that feeds the public student directory.</p>
+          <p className="account-copy">{text.accountCopy}</p>
         </div>
 
         {feedback.text ? (
@@ -133,27 +133,27 @@ function ProfilePage({
               <>
                 <form className="account-form" onSubmit={onAuthSubmit}>
                   <label>
-                    Email address
+                    {text.emailAddress}
                     <input
                       type="email"
                       value={authForm.email}
                       onChange={(event) => onAuthFieldChange('email', event.target.value)}
-                      placeholder="student@def.edu"
+                      placeholder={text.emailPlaceholder}
                     />
                   </label>
 
                   <label>
-                    Password
+                    {text.password}
                     <input
                       type="password"
                       value={authForm.password}
                       onChange={(event) => onAuthFieldChange('password', event.target.value)}
-                      placeholder="At least 6 characters"
+                      placeholder={text.passwordPlaceholder}
                     />
                   </label>
 
                   <button className="primary-action" type="submit" disabled={isSubmittingAuth}>
-                    {isSubmittingAuth ? 'Processing...' : 'Login'}
+                    {isSubmittingAuth ? text.processing : text.login}
                   </button>
                 </form>
               </>
@@ -162,7 +162,7 @@ function ProfilePage({
                 <div className="account-summary-avatar">
                   <div className="profile-avatar large-avatar" aria-hidden="true">
                     {currentUser.avatarUrl ? (
-                      <img className="avatar-image" src={getAssetUrl(currentUser.avatarUrl)} alt={`${currentUser.fullName} profile`} />
+                      <img className="avatar-image" src={getAssetUrl(currentUser.avatarUrl)} alt={text.profileAlt(currentUser.fullName)} />
                     ) : (
                       <>
                         <span className="profile-avatar-head" />
@@ -171,7 +171,7 @@ function ProfilePage({
                     )}
                   </div>
                   <label className="secondary-action upload-action">
-                    {isUploadingAvatar ? 'Uploading...' : 'Upload picture'}
+                    {isUploadingAvatar ? text.uploading : text.uploadPicture}
                     <input type="file" accept="image/*" onChange={onAvatarChange} disabled={isUploadingAvatar} />
                   </label>
                 </div>
@@ -183,7 +183,7 @@ function ProfilePage({
                 </div>
 
                 <button type="button" className="ghost-action" onClick={onLogout}>
-                  Logout
+                  {text.logout}
                 </button>
               </div>
             )}
@@ -194,82 +194,82 @@ function ProfilePage({
               <form className="account-form" onSubmit={onProfileSave}>
                 <div className="form-columns">
                   <label>
-                    Full name
+                    {text.fullName}
                     <input
                       type="text"
                       value={profileForm.fullName}
                       onChange={(event) => onProfileFieldChange('fullName', event.target.value)}
-                      placeholder="Enter your full name"
+                      placeholder={text.fullNamePlaceholder}
                     />
                   </label>
 
                   <label>
-                    Academic year
+                    {text.academicYear}
                     <input
                       type="text"
                       value={profileForm.academicYear}
                       onChange={(event) => onProfileFieldChange('academicYear', event.target.value)}
-                      placeholder="2025-2026"
+                      placeholder={text.academicYearPlaceholder}
                     />
                   </label>
                 </div>
 
                 <div className="form-columns">
                   <label>
-                    Major 1
+                    {text.major1}
                     <input
                       type="text"
                       value={profileForm.major1}
                       onChange={(event) => onProfileFieldChange('major1', event.target.value)}
-                      placeholder="Primary major"
+                      placeholder={text.major1Placeholder}
                     />
                   </label>
 
                   <label>
-                    Major 2
+                    {text.major2}
                     <input
                       type="text"
                       value={profileForm.major2}
                       onChange={(event) => onProfileFieldChange('major2', event.target.value)}
-                      placeholder="Secondary major"
+                      placeholder={text.major2Placeholder}
                     />
                   </label>
                 </div>
 
                 <label>
-                  Location
+                  {text.location}
                   <input
                     type="text"
                     value={profileForm.location}
                     onChange={(event) => onProfileFieldChange('location', event.target.value)}
-                    placeholder="City or campus location"
+                    placeholder={text.locationPlaceholder}
                   />
                 </label>
 
                 <label>
-                  Bio
+                  {text.bio}
                   <textarea
                     rows="5"
                     value={profileForm.bio}
                     onChange={(event) => onProfileFieldChange('bio', event.target.value)}
-                    placeholder="Write a short introduction for your public card"
+                    placeholder={text.bioPlaceholder}
                   />
                 </label>
 
                 <button className="primary-action" type="submit" disabled={isSavingProfile}>
-                  {isSavingProfile ? 'Saving...' : 'Save profile'}
+                  {isSavingProfile ? text.saving : text.saveProfile}
                 </button>
               </form>
             ) : (
               <div className="editor-placeholder">
-                <strong>Profile tools unlock after login</strong>
-                <p>Log in with an existing student account to edit majors, upload a picture, and publish your personal information into the students section.</p>
+                <strong>{text.profileToolsTitle}</strong>
+                <p>{text.profileToolsCopy}</p>
                 <ul>
-                  <li>Secure login with a stored session</li>
-                  <li>Editable personal information</li>
-                  <li>Avatar upload backed by the server</li>
+                  <li>{text.secureLogin}</li>
+                  <li>{text.editableInfo}</li>
+                  <li>{text.avatarUpload}</li>
                 </ul>
-                {isLoadingSession ? <span className="loading-note">Checking for an existing session...</span> : null}
+                {isLoadingSession ? <span className="loading-note">{text.checkingSession}</span> : null}
               </div>
             )}
           </article>
@@ -278,45 +278,45 @@ function ProfilePage({
         {currentUser ? (
           <article className="account-card password-card">
             <div>
-              <p className="section-kicker">Security</p>
-              <h2>Change your password</h2>
+              <p className="section-kicker">{text.security}</p>
+              <h2>{text.changePassword}</h2>
             </div>
 
             <form className="account-form" onSubmit={onPasswordChange}>
               <div className="form-columns">
                 <label>
-                  Current password
+                  {text.currentPassword}
                   <input
                     type="password"
                     value={passwordForm.currentPassword}
                     onChange={(event) => onPasswordFieldChange('currentPassword', event.target.value)}
-                    placeholder="Enter your current password"
+                    placeholder={text.currentPasswordPlaceholder}
                   />
                 </label>
 
                 <label>
-                  New password
+                  {text.newPassword}
                   <input
                     type="password"
                     value={passwordForm.nextPassword}
                     onChange={(event) => onPasswordFieldChange('nextPassword', event.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder={text.newPasswordPlaceholder}
                   />
                 </label>
               </div>
 
               <label>
-                Confirm new password
+                {text.confirmNewPassword}
                 <input
                   type="password"
                   value={passwordForm.confirmPassword}
                   onChange={(event) => onPasswordFieldChange('confirmPassword', event.target.value)}
-                  placeholder="Re-enter the new password"
+                  placeholder={text.confirmNewPasswordPlaceholder}
                 />
               </label>
 
               <button className="primary-action" type="submit" disabled={isChangingPassword}>
-                {isChangingPassword ? 'Updating password...' : 'Update password'}
+                {isChangingPassword ? text.updatingPassword : text.updatePassword}
               </button>
             </form>
           </article>
@@ -326,31 +326,31 @@ function ProfilePage({
           <div className="profile-posts-layout">
             <article className="account-card post-composer-card">
               <div>
-                <p className="section-kicker">Create post</p>
-                <h2>Share a new photo</h2>
-                <p className="post-composer-copy">Upload 1 to 5 pictures in one post and add one description for the full gallery set.</p>
+                <p className="section-kicker">{text.createPost}</p>
+                <h2>{text.shareNewPhoto}</h2>
+                <p className="post-composer-copy">{text.postComposerCopy}</p>
               </div>
 
               <form className="account-form post-composer-form" onSubmit={onPostSubmit}>
                 <label className="post-upload-field">
-                  <span>Choose photos</span>
-                  <small>Pick between 1 and 5 images for one post</small>
+                  <span>{text.choosePhotos}</span>
+                  <small>{text.choosePhotosHelp}</small>
                   <input name="postImages" type="file" accept="image/*" multiple disabled={isCreatingPost} />
                 </label>
 
                 <label className="post-caption-field">
-                  Description
+                  {text.description}
                   <textarea
                     rows="3"
                     value={postForm.caption}
                     onChange={(event) => onPostFieldChange(event.target.value)}
-                    placeholder="Write a description under the photo"
+                    placeholder={text.descriptionPlaceholder}
                   />
                 </label>
 
                 <div className="post-composer-actions">
                   <button className="primary-action post-publish-button" type="submit" disabled={isCreatingPost}>
-                    {isCreatingPost ? 'Posting...' : 'Post photo'}
+                    {isCreatingPost ? text.posting : text.postPhoto}
                   </button>
                 </div>
               </form>
@@ -359,15 +359,15 @@ function ProfilePage({
             <article className="account-card my-posts-card">
               <div className="my-posts-heading">
                 <div>
-                  <p className="section-kicker">My posts</p>
-                  <h2>Published photos</h2>
+                  <p className="section-kicker">{text.myPosts}</p>
+                  <h2>{text.publishedPhotos}</h2>
                 </div>
-                <span className="my-posts-count">{currentUser.posts?.length || 0} posts</span>
+                <span className="my-posts-count">{text.postsCount(currentUser.posts?.length || 0)}</span>
               </div>
 
-              <div className="my-posts-toolbar" aria-label="Gallery navigation">
-                <span className="my-posts-tab is-active">Posts</span>
-                <span className="my-posts-tab">Gallery</span>
+              <div className="my-posts-toolbar" aria-label={text.galleryNavigation}>
+                <span className="my-posts-tab is-active">{text.postsTab}</span>
+                <span className="my-posts-tab">{text.galleryTab}</span>
               </div>
 
               {currentUser.posts?.length ? (
@@ -377,59 +377,60 @@ function ProfilePage({
                       <div className="profile-post-image-wrap">
                         <PostImageCarousel
                           post={post}
-                          altText={post.caption || `${currentUser.fullName} post`}
+                          altText={post.caption || text.profileAlt(currentUser.fullName)}
                           imageClassName="profile-post-image"
+                          labels={carouselText}
                         />
                         <div className="profile-post-overlay">
-                          <p>{post.caption || 'Shared from your student gallery.'}</p>
+                          <p>{post.caption || text.sharedFromGallery}</p>
                         </div>
                       </div>
                       <div className="profile-post-meta">
-                        <span>{getPostImageUrls(post).length} photos</span>
-                        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                        <span>{text.photoCount(getPostImageUrls(post).length)}</span>
+                        <span>{new Date(post.createdAt).toLocaleDateString(dateLocale)}</span>
                       </div>
 
                       {editingPostId === post.id ? (
                         <form className="profile-post-editor" onSubmit={(event) => handleEditSubmit(event, post.id)}>
                           <label>
-                            Edit description
+                            {text.editDescription}
                             <textarea
                               rows="3"
                               value={editingCaption}
                               onChange={(event) => setEditingCaption(event.target.value)}
-                              placeholder="Write a description for this post"
+                              placeholder={text.editDescriptionPlaceholder}
                             />
                           </label>
                           <div className="profile-post-edit-gallery">
                             {editingImageUrls.map((imageUrl, index) => (
                               <article key={`${post.id}-${imageUrl}-${index}`} className="profile-post-edit-tile">
-                                <img src={getAssetUrl(imageUrl)} alt={`Post photo ${index + 1}`} />
+                                <img src={getAssetUrl(imageUrl)} alt={text.postPhotoAlt(index + 1)} />
                                 <button
                                   className="ghost-action profile-post-image-delete"
                                   type="button"
                                   onClick={() => handleRemoveEditingImage(imageUrl)}
                                   disabled={editingImageUrls.length === 1 || isUpdatingPost}
                                 >
-                                  {editingImageUrls.length === 1 ? 'Keep 1 photo' : 'Remove photo'}
+                                  {editingImageUrls.length === 1 ? text.keepOnePhoto : text.removePhoto}
                                 </button>
                               </article>
                             ))}
                           </div>
                           <div className="profile-post-actions">
                             <button className="primary-action profile-post-action" type="submit" disabled={isUpdatingPost}>
-                              {isUpdatingPost ? 'Saving...' : 'Save'}
+                              {isUpdatingPost ? text.saving : text.save}
                             </button>
                             <button className="secondary-action profile-post-action" type="button" onClick={handleEditCancel} disabled={isUpdatingPost}>
-                              Cancel
+                              {text.cancel}
                             </button>
                           </div>
                         </form>
                       ) : (
                         <div className="profile-post-body">
-                          <p className="profile-post-caption">{post.caption || 'Shared from your student gallery.'}</p>
+                          <p className="profile-post-caption">{post.caption || text.sharedFromGallery}</p>
                           <div className="profile-post-actions">
                             <button className="secondary-action profile-post-action" type="button" onClick={() => handleEditStart(post)}>
-                              Edit
+                              {text.edit}
                             </button>
                             <button
                               className="ghost-action profile-post-action"
@@ -437,7 +438,7 @@ function ProfilePage({
                               onClick={() => handleDeleteClick(post.id)}
                               disabled={deletingPostId === post.id}
                             >
-                              {deletingPostId === post.id ? 'Deleting...' : 'Delete'}
+                              {deletingPostId === post.id ? text.deleting : text.delete}
                             </button>
                           </div>
                         </div>
@@ -446,7 +447,7 @@ function ProfilePage({
                   ))}
                 </div>
               ) : (
-                <p className="empty-posts-note">No posts yet. Share your first photo from this page.</p>
+                <p className="empty-posts-note">{text.noPostsYet}</p>
               )}
             </article>
           </div>
