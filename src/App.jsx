@@ -890,7 +890,7 @@ function App() {
         </nav>
 
         <div className="header-actions">
-          <div className="language-switch" role="group" aria-label={uiText.common.languageAriaLabel}>
+          <div className="language-switch language-switch-desktop" role="group" aria-label={uiText.common.languageAriaLabel}>
             {supportedLanguages.map((option) => (
               <button
                 key={option.code}
@@ -958,6 +958,19 @@ function App() {
         <nav className="mobile-nav-links">
           {navLinks.map((link) => renderNavigationLink(link, 'mobile-nav-link', handleMobileNavClose))}
         </nav>
+
+        <div className="language-switch language-switch-sidebar" role="group" aria-label={uiText.common.languageAriaLabel}>
+          {supportedLanguages.map((option) => (
+            <button
+              key={`sidebar-${option.code}`}
+              type="button"
+              className={language === option.code ? 'language-option is-active' : 'language-option'}
+              onClick={() => setLanguage(option.code)}
+            >
+              {option.shortLabel}
+            </button>
+          ))}
+        </div>
       </aside>
 
       <Routes>

@@ -642,7 +642,7 @@ export function getDateLocale(language) {
 
 export function getInitialLanguage() {
   if (typeof window === 'undefined') {
-    return 'en'
+    return 'km'
   }
 
   const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
@@ -651,5 +651,5 @@ export function getInitialLanguage() {
     return storedLanguage
   }
 
-  return window.navigator.language?.toLowerCase().startsWith('km') ? 'km' : 'en'
+  return 'km'
 }

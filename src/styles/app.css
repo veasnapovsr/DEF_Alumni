@@ -111,6 +111,10 @@
   color: var(--brand-white);
 }
 
+.language-switch-sidebar {
+  display: none;
+}
+
 .brand-mark {
   display: inline-flex;
   align-items: baseline;
@@ -1967,6 +1971,16 @@
     justify-content: flex-end;
   }
 
+  .language-switch-desktop {
+    display: none;
+  }
+
+  .language-switch-sidebar {
+    display: inline-flex;
+    justify-self: start;
+    margin-top: 4px;
+  }
+
   .language-option {
     min-width: 44px;
     padding-inline: 10px;
@@ -2128,7 +2142,7 @@
     gap: 8px;
   }
 
-  .language-switch {
+  .language-switch-sidebar {
     order: -1;
   }
 
