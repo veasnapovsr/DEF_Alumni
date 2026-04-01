@@ -141,24 +141,12 @@ function HomePage({
               >
                 <div className="student-highlight-topbar">
                   <div className="student-highlight-profilemark" aria-hidden="true">
-                    {student.previewMediaItem?.url ? (
-                      student.previewMediaItem.type === 'video' ? (
-                        <video
-                          className="student-highlight-photo"
-                          src={getAssetUrl(student.previewMediaItem.url)}
-                          muted
-                          autoPlay
-                          loop
-                          playsInline
-                          preload="metadata"
-                        />
-                      ) : (
-                        <img
-                          className="student-highlight-photo"
-                          src={getAssetUrl(student.previewMediaItem.url)}
-                          alt={text.galleryHighlightAlt(student.fullName)}
-                        />
-                      )
+                    {student.avatarUrl ? (
+                      <img
+                        className="student-highlight-photo"
+                        src={getAssetUrl(student.avatarUrl)}
+                        alt={text.avatarAlt(student.fullName)}
+                      />
                     ) : (
                       <span className="student-highlight-photo student-highlight-photo-fallback">DEF</span>
                     )}

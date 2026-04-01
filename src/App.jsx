@@ -54,6 +54,8 @@ function normalizeStudent(student) {
     bio: student.bio || '',
     location: student.location || '',
     avatarUrl: student.avatarUrl || '',
+    email: student.email || '',
+    role: student.role || 'student',
     posts: normalizePostMediaCollection(student.posts),
   }
 }
@@ -61,8 +63,6 @@ function normalizeStudent(student) {
 function normalizeAdminStudent(student) {
   return {
     ...normalizeStudent(student),
-    email: student.email || '',
-    role: student.role || 'student',
   }
 }
 
@@ -76,34 +76,49 @@ function normalizeAuthenticatedUser(user) {
 
 function buildStudentGalleryHighlights(students) {
   return students
-    .map((student) => {
-      const galleryPosts = [...student.posts]
+    .flatMap((student) => (
+      (student.posts || [])
         .filter((post) => getPostMediaItems(post).length)
-        .sort((leftPost, rightPost) => new Date(rightPost.createdAt || 0) - new Date(leftPost.createdAt || 0))
+        .map((post) => {
+          const postMedia = getPostMediaItems(post)
 
-      const latestPost = galleryPosts[0]
+          return {
+            id: `${student.id}:${post.id}`,
+            studentId: student.id,
+            postId: post.id,
+            fullName: student.fullName,
+            avatarUrl: student.avatarUrl || '',
+            media: postMedia,
+            caption: post.caption || '',
+            createdAt: post.createdAt || '',
+            totalPhotos: student.posts.reduce((mediaCount, currentPost) => mediaCount + getPostMediaCount(currentPost), 0),
+          }
+        })
+    ))
+    .sort((leftHighlight, rightHighlight) => new Date(rightHighlight.createdAt || 0) - new Date(leftHighlight.createdAt || 0))
+}
 
-      if (!latestPost) {
+function normalizeStudentHighlights(studentHighlights) {
+  if (!Array.isArray(studentHighlights)) {
+    return []
+  }
+
+  return studentHighlights
+    .map((highlight) => {
+      const studentId = String(highlight?.studentId || '').trim()
+      const postId = String(highlight?.postId || '').trim()
+
+      if (!studentId || !postId) {
         return null
       }
 
-      const latestPostMedia = getPostMediaItems(latestPost)
-      const previewMediaItem = latestPostMedia[0] || (student.avatarUrl ? { type: 'image', url: student.avatarUrl } : null)
-
       return {
-        id: student.id,
-        studentId: student.id,
-        fullName: student.fullName,
-        previewMediaItem,
-        media: latestPostMedia,
-        caption: latestPost.caption || '',
-        createdAt: latestPost.createdAt || '',
-        totalPhotos: student.posts.reduce((mediaCount, post) => mediaCount + getPostMediaCount(post), 0),
+        id: String(highlight?.id || `${studentId}:${postId}`),
+        studentId,
+        postId,
       }
     })
     .filter(Boolean)
-    .sort((leftHighlight, rightHighlight) => new Date(rightHighlight.createdAt || 0) - new Date(leftHighlight.createdAt || 0))
-    .slice(0, 9)
 }
 
 function readContentValue(value, fallback = '') {
@@ -128,6 +143,7 @@ function normalizeSiteContent(content, fallbackContent) {
       description: readContentValue(eventRow?.description, fallback.eventRows[index]?.description || ''),
       imageUrl: readContentValue(eventRow?.imageUrl, fallback.eventRows[index]?.imageUrl || ''),
     })),
+    studentHighlights: normalizeStudentHighlights(content?.studentHighlights),
     footer: {
       title: readContentValue(content?.footer?.title, fallback.footer.title),
       description: readContentValue(content?.footer?.description, fallback.footer.description),
@@ -221,7 +237,11 @@ function App() {
   const heroSlides = siteContent.heroSlides.length ? siteContent.heroSlides : defaultHomePageContent.heroSlides
   const eventRows = siteContent.eventRows.length ? siteContent.eventRows : defaultHomePageContent.eventRows
   const directoryStudents = students.length ? students : placeholderStudents.map(normalizeStudent)
-  const highlightStudents = buildStudentGalleryHighlights(directoryStudents)
+  const availableStudentHighlights = buildStudentGalleryHighlights(directoryStudents)
+  const selectedHighlightIds = new Set(siteContent.studentHighlights.map((highlight) => highlight.id))
+  const highlightStudents = availableStudentHighlights
+    .filter((highlight) => selectedHighlightIds.has(highlight.id))
+    .slice(0, 9)
   const isAdmin = currentUser?.role === 'admin'
   const navLinks = navigationLinks
 
@@ -704,6 +724,7 @@ function App() {
 
       const nextStudents = await fetchStudentsList()
       setStudents(nextStudents)
+      setSiteContentSource(payload.content)
       const normalizedUser = normalizeAuthenticatedUser(payload.user)
       setCurrentUser(normalizedUser)
       if (normalizedUser.role === 'admin') {
@@ -836,7 +857,7 @@ function App() {
     setAdminFeedback({ type: '', text: '' })
 
     try {
-      await apiRequest(`/api/admin/students/${studentId}`, {
+      const deletePayload = await apiRequest(`/api/admin/students/${studentId}`, {
         method: 'DELETE',
         token: authToken,
       })
@@ -848,6 +869,7 @@ function App() {
 
       setStudents(nextStudents)
       setAdminStudents(nextAdminStudents)
+      setSiteContentSource(deletePayload.content)
       setAdminFeedback({ type: 'success', text: uiText.messages.studentDeleted })
     } catch (error) {
       setAdminFeedback({ type: 'error', text: error.message })
@@ -906,6 +928,32 @@ function App() {
       setAdminFeedback({ type: 'error', text: error.message })
     } finally {
       setUploadingContentTarget('')
+    }
+  }
+
+  const handleHomepageHighlightToggle = async (postId, shouldFeature) => {
+    if (!authToken) {
+      setFeedback({ type: 'error', text: uiText.messages.loginBeforeHighlightSelection })
+      return false
+    }
+
+    setFeedback({ type: '', text: '' })
+
+    try {
+      const payload = await apiRequest(`/api/auth/homepage-highlights/${postId}`, {
+        method: shouldFeature ? 'POST' : 'DELETE',
+        token: authToken,
+      })
+
+      setSiteContentSource(payload.content)
+      setFeedback({
+        type: 'success',
+        text: shouldFeature ? uiText.messages.highlightAdded : uiText.messages.highlightRemoved,
+      })
+      return true
+    } catch (error) {
+      setFeedback({ type: 'error', text: error.message })
+      return false
     }
   }
 
@@ -1052,6 +1100,10 @@ function App() {
               onUpdatePost={handlePostUpdate}
               isUpdatingPost={isUpdatingPost}
               onDeletePost={handlePostDelete}
+              highlightedPostIds={siteContent.studentHighlights
+                .filter((highlight) => highlight.studentId === currentUser?.id)
+                .map((highlight) => highlight.postId)}
+              onToggleHomepageHighlight={handleHomepageHighlightToggle}
               deletingPostId={deletingPostId}
               onLogout={handleLogout}
               isLoadingSession={isLoadingSession}

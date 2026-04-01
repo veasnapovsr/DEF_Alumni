@@ -20,6 +20,7 @@ function cloneSiteContent(siteContent) {
   return {
     heroSlides: siteContent.heroSlides.map((slide) => ({ ...slide })),
     eventRows: siteContent.eventRows.map((eventRow) => ({ ...eventRow })),
+    studentHighlights: Array.isArray(siteContent.studentHighlights) ? siteContent.studentHighlights.map((highlight) => ({ ...highlight })) : [],
     footer: { ...siteContent.footer },
   }
 }

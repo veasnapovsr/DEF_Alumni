@@ -1455,6 +1455,12 @@
   background: var(--brand-blue-deep);
 }
 
+.profile-highlight-limit-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
 .profile-post-grid,
 .student-post-grid {
   display: grid;
@@ -1620,6 +1626,30 @@
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+}
+
+.profile-post-highlight-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 0;
+}
+
+.profile-post-highlight-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.profile-post-highlight-copy strong {
+  color: var(--brand-blue-deep);
+  font-size: 0.84rem;
+}
+
+.profile-post-highlight-copy span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 .profile-post-body,

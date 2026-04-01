@@ -4,10 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm run server:dev\" \"npm run dev:client\"",
+    "dev:client": "vite",
     "server": "node server/index.js",
     "server:dev": "node --watch server/index.js",
-    "dev:full": "concurrently \"npm run server:dev\" \"npm run dev\"",
+    "dev:full": "concurrently \"npm run server:dev\" \"npm run dev:client\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

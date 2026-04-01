@@ -89,8 +89,24 @@
       "avatarUrl": "/uploads/1773220565687-3f3023d7-1bdc-489d-8538-097840ff2479.jpg",
       "role": "admin",
       "createdAt": "2026-03-11T09:15:56.098Z",
-      "updatedAt": "2026-04-01T03:48:08.554Z",
+      "updatedAt": "2026-04-01T07:34:34.128Z",
       "posts": [
+        {
+          "id": "64d90168-ec8c-4b5a-8409-0251bc240f12",
+          "imageUrl": "/uploads/1775028874118-7a3480e5-5dca-436a-8e90-580e4f92aa4c.jpg",
+          "imageUrls": [
+            "/uploads/1775028874118-7a3480e5-5dca-436a-8e90-580e4f92aa4c.jpg"
+          ],
+          "videoUrl": "",
+          "media": [
+            {
+              "url": "/uploads/1775028874118-7a3480e5-5dca-436a-8e90-580e4f92aa4c.jpg",
+              "type": "image"
+            }
+          ],
+          "caption": "Jerry",
+          "createdAt": "2026-04-01T07:34:34.128Z"
+        },
         {
           "id": "927dd5f4-73df-431d-90aa-c0d368589278",
           "imageUrl": "/uploads/1773476036934-2d6aaf27-1770-4c92-80e3-9e88a1393d9d.jpg",
@@ -211,6 +227,23 @@
         "id": "event-photos",
         "description": "Year 2....",
         "imageUrl": "/uploads/1773477709878-7c3e9067-7a5f-43cc-b9a0-c2e951adc3ce.jpg"
+      }
+    ],
+    "studentHighlights": [
+      {
+        "id": "fd202caa-dfad-4428-8da5-4f0224ec38e0:7a692439-5b74-46e3-a805-6a73ab2a197d",
+        "studentId": "fd202caa-dfad-4428-8da5-4f0224ec38e0",
+        "postId": "7a692439-5b74-46e3-a805-6a73ab2a197d"
+      },
+      {
+        "id": "fd202caa-dfad-4428-8da5-4f0224ec38e0:cec659b7-85e9-47aa-b45d-8533a9dc9018",
+        "studentId": "fd202caa-dfad-4428-8da5-4f0224ec38e0",
+        "postId": "cec659b7-85e9-47aa-b45d-8533a9dc9018"
+      },
+      {
+        "id": "fd202caa-dfad-4428-8da5-4f0224ec38e0:927dd5f4-73df-431d-90aa-c0d368589278",
+        "studentId": "fd202caa-dfad-4428-8da5-4f0224ec38e0",
+        "postId": "927dd5f4-73df-431d-90aa-c0d368589278"
       }
     ],
     "footer": {

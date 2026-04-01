@@ -24,6 +24,7 @@ const MAX_POST_IMAGES = 5
 const MAX_POST_MEDIA_ITEMS = 5
 const MAX_POST_VIDEO_COUNT = 1
 const MAX_POST_VIDEO_FILE_SIZE = 25 * 1024 * 1024
+const MAX_STUDENT_HOMEPAGE_HIGHLIGHTS = 3
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_ORIGIN || '')
   .split(',')
   .map((origin) => origin.trim())
@@ -70,6 +71,7 @@ const defaultHomepageContent = {
       imageUrl: '/uploads/slide3.jpg',
     },
   ],
+  studentHighlights: [],
   footer: {
     title: 'DEF student portal backend',
     description: 'Authentication, editable profiles, and picture uploads are now part of the application architecture and ready for further expansion.',
@@ -192,6 +194,43 @@ function normalizePost(post) {
   }
 }
 
+function buildStudentHighlightId(studentId, postId) {
+  return `${studentId}:${postId}`
+}
+
+function normalizeHomepageHighlights(studentHighlights) {
+  if (!Array.isArray(studentHighlights)) {
+    return []
+  }
+
+  const seenHighlightIds = new Set()
+
+  return studentHighlights
+    .map((highlight) => {
+      const studentId = String(highlight?.studentId || '').trim()
+      const postId = String(highlight?.postId || '').trim()
+
+      if (!studentId || !postId) {
+        return null
+      }
+
+      const id = String(highlight?.id || buildStudentHighlightId(studentId, postId)).trim()
+
+      if (!id || seenHighlightIds.has(id)) {
+        return null
+      }
+
+      seenHighlightIds.add(id)
+
+      return {
+        id,
+        studentId,
+        postId,
+      }
+    })
+    .filter(Boolean)
+}
+
 function normalizeHomepageContent(homepage) {
   const fallback = cloneDefaultHomepageContent()
   const heroSlides = Array.isArray(homepage?.heroSlides) && homepage.heroSlides.length
@@ -200,6 +239,7 @@ function normalizeHomepageContent(homepage) {
   const eventRows = Array.isArray(homepage?.eventRows) && homepage.eventRows.length
     ? homepage.eventRows
     : fallback.eventRows
+  const studentHighlights = normalizeHomepageHighlights(homepage?.studentHighlights)
 
   return {
     heroSlides: heroSlides.map((slide, index) => ({
@@ -214,6 +254,7 @@ function normalizeHomepageContent(homepage) {
       description: normalizeText(eventRow?.description, fallback.eventRows[index]?.description || `Homepage event ${index + 1}`),
       imageUrl: String(eventRow?.imageUrl || fallback.eventRows[index]?.imageUrl || ''),
     })),
+    studentHighlights,
     footer: {
       title: normalizeText(homepage?.footer?.title, fallback.footer.title),
       description: normalizeText(homepage?.footer?.description, fallback.footer.description),
@@ -395,6 +436,14 @@ function toPublicUser(user, options = {}) {
   }
 }
 
+function removeStudentHighlightsForPost(studentHighlights, studentId, postId) {
+  return normalizeHomepageHighlights(studentHighlights).filter((highlight) => !(highlight.studentId === studentId && highlight.postId === postId))
+}
+
+function removeStudentHighlightsForStudent(studentHighlights, studentId) {
+  return normalizeHomepageHighlights(studentHighlights).filter((highlight) => highlight.studentId !== studentId)
+}
+
 function signToken(user) {
   return jwt.sign({ sub: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' })
 }
@@ -548,6 +597,66 @@ app.put('/api/auth/me', requireAuth, async (request, response) => {
   await writeDb(db)
 
   response.json({ user: toPublicUser(nextUser, { includePosts: true, includeEmail: true, includeRole: true }) })
+})
+
+app.post('/api/auth/homepage-highlights/:postId', requireAuth, async (request, response) => {
+  const db = await readDb()
+  const userIndex = db.users.findIndex((user) => user.id === request.user.id)
+
+  if (userIndex === -1) {
+    response.status(404).json({ message: 'User not found.' })
+    return
+  }
+
+  const user = db.users[userIndex]
+  const post = (user.posts || []).find((currentPost) => currentPost.id === request.params.postId)
+
+  if (!post) {
+    response.status(404).json({ message: 'Post not found.' })
+    return
+  }
+
+  const nextHighlight = {
+    id: buildStudentHighlightId(user.id, post.id),
+    studentId: user.id,
+    postId: post.id,
+  }
+  const existingHighlights = normalizeHomepageHighlights(db.homepage?.studentHighlights)
+  const hasHighlight = existingHighlights.some((highlight) => highlight.id === nextHighlight.id)
+  const userHighlightCount = existingHighlights.filter((highlight) => highlight.studentId === user.id).length
+
+  if (!hasHighlight && userHighlightCount >= MAX_STUDENT_HOMEPAGE_HIGHLIGHTS) {
+    response.status(400).json({ message: `You can select up to ${MAX_STUDENT_HOMEPAGE_HIGHLIGHTS} posts for the homepage.` })
+    return
+  }
+
+  db.homepage = {
+    ...db.homepage,
+    studentHighlights: hasHighlight ? existingHighlights : [nextHighlight, ...existingHighlights],
+  }
+
+  await writeDb(db)
+
+  response.json({ content: db.homepage, highlight: nextHighlight })
+})
+
+app.delete('/api/auth/homepage-highlights/:postId', requireAuth, async (request, response) => {
+  const db = await readDb()
+  const userIndex = db.users.findIndex((user) => user.id === request.user.id)
+
+  if (userIndex === -1) {
+    response.status(404).json({ message: 'User not found.' })
+    return
+  }
+
+  db.homepage = {
+    ...db.homepage,
+    studentHighlights: removeStudentHighlightsForPost(db.homepage?.studentHighlights, request.user.id, request.params.postId),
+  }
+
+  await writeDb(db)
+
+  response.json({ content: db.homepage })
 })
 
 app.put('/api/auth/password', requireAuth, async (request, response) => {
@@ -801,9 +910,13 @@ app.delete('/api/auth/posts/:postId', requireAuth, async (request, response) => 
   }
 
   db.users[userIndex] = nextUser
+  db.homepage = {
+    ...db.homepage,
+    studentHighlights: removeStudentHighlightsForPost(db.homepage?.studentHighlights, nextUser.id, removedPost.id),
+  }
   await writeDb(db)
 
-  response.json({ user: toPublicUser(nextUser, { includePosts: true, includeEmail: true, includeRole: true }) })
+  response.json({ user: toPublicUser(nextUser, { includePosts: true, includeEmail: true, includeRole: true }), content: db.homepage })
 })
 
 app.get('/api/admin/students', requireAuth, requireAdmin, async (_request, response) => {
@@ -946,10 +1059,14 @@ app.delete('/api/admin/students/:id', requireAuth, requireAdmin, async (request,
   await deleteUpload(student.avatarUrl)
   await deleteUploads((student.posts || []).flatMap((post) => getPostAssetUrls(post)))
 
+  db.homepage = {
+    ...db.homepage,
+    studentHighlights: removeStudentHighlightsForStudent(db.homepage?.studentHighlights, student.id),
+  }
   db.users.splice(userIndex, 1)
   await writeDb(db)
 
-  response.json({ message: 'Student deleted successfully.' })
+  response.json({ message: 'Student deleted successfully.', content: db.homepage })
 })
 
 app.put('/api/admin/homepage', requireAuth, requireAdmin, async (request, response) => {

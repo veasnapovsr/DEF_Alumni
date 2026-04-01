@@ -4,6 +4,8 @@ import PostImageCarousel from '../components/PostImageCarousel'
 import { getAssetUrl } from '../utils/api'
 import { getPostMediaCount, getPostMediaItems, hasVideoMedia } from '../utils/postMedia'
 
+const MAX_HOMEPAGE_HIGHLIGHTS = 3
+
 function ProfilePage({
   currentUser,
   authForm,
@@ -27,6 +29,8 @@ function ProfilePage({
   onUpdatePost,
   isUpdatingPost,
   onDeletePost,
+  highlightedPostIds,
+  onToggleHomepageHighlight,
   deletingPostId,
   onLogout,
   isLoadingSession,
@@ -36,9 +40,12 @@ function ProfilePage({
   dateLocale,
 }) {
   const isAdmin = currentUser?.role === 'admin'
+  const highlightedPostIdSet = new Set(highlightedPostIds || [])
+  const hasReachedHighlightLimit = highlightedPostIdSet.size >= MAX_HOMEPAGE_HIGHLIGHTS
   const [editingPostId, setEditingPostId] = useState('')
   const [editingCaption, setEditingCaption] = useState('')
   const [editingMediaItems, setEditingMediaItems] = useState([])
+  const [highlightActionPostId, setHighlightActionPostId] = useState('')
 
   const handleEditStart = (post) => {
     setEditingPostId(post.id)
@@ -81,6 +88,16 @@ function ProfilePage({
 
     if (isDeleted && editingPostId === postId) {
       handleEditCancel()
+    }
+  }
+
+  const handleHighlightToggle = async (postId, shouldFeature) => {
+    setHighlightActionPostId(postId)
+
+    try {
+      await onToggleHomepageHighlight(postId, shouldFeature)
+    } finally {
+      setHighlightActionPostId('')
     }
   }
 
@@ -364,6 +381,8 @@ function ProfilePage({
                 <span className="my-posts-tab">{text.galleryTab}</span>
               </div>
 
+              <p className="profile-highlight-limit-note">{text.homepageHighlightLimit(highlightedPostIdSet.size, MAX_HOMEPAGE_HIGHLIGHTS)}</p>
+
               {currentUser.posts?.length ? (
                 <div className="profile-post-grid">
                   {currentUser.posts.map((post) => (
@@ -382,6 +401,31 @@ function ProfilePage({
                       <div className="profile-post-meta">
                         <span>{text.photoCount(getPostMediaCount(post))}</span>
                         <span>{new Date(post.createdAt).toLocaleDateString(dateLocale)}</span>
+                      </div>
+
+                      <div className="profile-post-highlight-row">
+                        <div className="profile-post-highlight-copy">
+                          <strong>{text.homepageHighlightTitle}</strong>
+                          <span>
+                            {highlightedPostIdSet.has(post.id)
+                              ? text.highlightSelected
+                              : hasReachedHighlightLimit
+                                ? text.highlightLimitReached
+                                : text.highlightNotSelected}
+                          </span>
+                        </div>
+                        <button
+                          className={highlightedPostIdSet.has(post.id) ? 'ghost-action profile-post-action' : 'secondary-action profile-post-action'}
+                          type="button"
+                          onClick={() => handleHighlightToggle(post.id, !highlightedPostIdSet.has(post.id))}
+                          disabled={highlightActionPostId === post.id || (hasReachedHighlightLimit && !highlightedPostIdSet.has(post.id))}
+                        >
+                          {highlightActionPostId === post.id
+                            ? text.saving
+                            : highlightedPostIdSet.has(post.id)
+                              ? text.removeFromHomepage
+                              : text.showOnHomepage}
+                        </button>
                       </div>
 
                       {editingPostId === post.id ? (
