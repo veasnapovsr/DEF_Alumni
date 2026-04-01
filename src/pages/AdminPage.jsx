@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAssetUrl } from '../utils/api'
 
@@ -47,20 +47,6 @@ function AdminPage({
   const [studentForm, setStudentForm] = useState(() => createStudentDraft(null))
   const [siteDraft, setSiteDraft] = useState(() => cloneSiteContent(siteContent))
 
-  useEffect(() => {
-    setSiteDraft(cloneSiteContent(siteContent))
-  }, [siteContent])
-
-  useEffect(() => {
-    if (!selectedStudentId) {
-      setStudentForm(createStudentDraft(null))
-      return
-    }
-
-    const selectedStudent = students.find((student) => student.id === selectedStudentId)
-    setStudentForm(createStudentDraft(selectedStudent || null))
-  }, [selectedStudentId, students])
-
   const handleStudentFieldChange = (field, value) => {
     setStudentForm((currentForm) => ({
       ...currentForm,
@@ -92,6 +78,16 @@ function AdminPage({
     }))
   }
 
+  const handleCreateNewStudent = () => {
+    setSelectedStudentId('')
+    setStudentForm(createStudentDraft(null))
+  }
+
+  const handleStudentSelect = (student) => {
+    setSelectedStudentId(student.id)
+    setStudentForm(createStudentDraft(student))
+  }
+
   const handleStudentSubmit = async (event) => {
     event.preventDefault()
 
@@ -114,8 +110,7 @@ function AdminPage({
     await onDeleteStudent(student.id)
 
     if (selectedStudentId === student.id) {
-      setSelectedStudentId('')
-      setStudentForm(createStudentDraft(null))
+      handleCreateNewStudent()
     }
   }
 
@@ -212,7 +207,7 @@ function AdminPage({
                     <h2>{selectedStudentId ? text.updateStudent : text.createStudent}</h2>
                   </div>
                   {selectedStudentId ? (
-                    <button type="button" className="secondary-action" onClick={() => setSelectedStudentId('')}>
+                    <button type="button" className="secondary-action" onClick={handleCreateNewStudent}>
                       {text.createNewInstead}
                     </button>
                   ) : null}
@@ -342,7 +337,7 @@ function AdminPage({
                       </div>
 
                       <div className="admin-student-actions">
-                        <button type="button" className="secondary-action" onClick={() => setSelectedStudentId(student.id)}>
+                        <button type="button" className="secondary-action" onClick={() => handleStudentSelect(student)}>
                           {text.edit}
                         </button>
                         <button

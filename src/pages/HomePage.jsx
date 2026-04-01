@@ -141,11 +141,15 @@ function HomePage({
               >
                 <div className="student-highlight-topbar">
                   <div className="student-highlight-profilemark" aria-hidden="true">
-                    <img
-                      className="student-highlight-photo"
-                      src={getAssetUrl(student.imageUrl)}
-                      alt={text.galleryHighlightAlt(student.fullName)}
-                    />
+                    {student.previewImageUrl ? (
+                      <img
+                        className="student-highlight-photo"
+                        src={getAssetUrl(student.previewImageUrl)}
+                        alt={text.galleryHighlightAlt(student.fullName)}
+                      />
+                    ) : (
+                      <span className="student-highlight-photo student-highlight-photo-fallback">DEF</span>
+                    )}
                   </div>
                   <div className="student-highlight-profilecopy">
                     <strong>{student.fullName}</strong>
@@ -158,7 +162,7 @@ function HomePage({
 
                 <div className="student-highlight-media-shell">
                   <PostImageCarousel
-                    post={{ id: student.id, imageUrls: student.imageUrls }}
+                    post={{ id: student.id, media: student.media }}
                     altText={text.galleryHighlightAlt(student.fullName)}
                     imageClassName="student-highlight-photo student-highlight-photo-main"
                     intervalMs={2600}

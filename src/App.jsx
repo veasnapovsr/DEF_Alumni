@@ -14,7 +14,8 @@ import {
   supportedLanguages,
 } from './data/translations'
 import { apiRequest, getAssetUrl } from './utils/api'
-import { getPostImageUrls, normalizePostMediaCollection } from './utils/postMedia'
+import { getPostMediaCount, getPostMediaItems, normalizePostMediaCollection } from './utils/postMedia'
+import readVideoDuration from './utils/readVideoDuration'
 import './styles/app.css'
 
 const TOKEN_STORAGE_KEY = 'def-auth-token'
@@ -77,7 +78,7 @@ function buildStudentGalleryHighlights(students) {
   return students
     .map((student) => {
       const galleryPosts = [...student.posts]
-        .filter((post) => getPostImageUrls(post).length)
+        .filter((post) => getPostMediaItems(post).length)
         .sort((leftPost, rightPost) => new Date(rightPost.createdAt || 0) - new Date(leftPost.createdAt || 0))
 
       const latestPost = galleryPosts[0]
@@ -86,22 +87,27 @@ function buildStudentGalleryHighlights(students) {
         return null
       }
 
-      const imageUrls = galleryPosts.flatMap((post) => getPostImageUrls(post))
+      const media = galleryPosts.flatMap((post) => getPostMediaItems(post))
+      const previewImageUrl = student.avatarUrl || media.find((item) => item.type === 'image')?.url || ''
 
       return {
         id: student.id,
         studentId: student.id,
         fullName: student.fullName,
-        imageUrl: imageUrls[0],
-        imageUrls,
+        previewImageUrl,
+        media,
         caption: latestPost.caption || '',
         createdAt: latestPost.createdAt || '',
-        totalPhotos: student.posts.reduce((photoCount, post) => photoCount + getPostImageUrls(post).length, 0),
+        totalPhotos: student.posts.reduce((mediaCount, post) => mediaCount + getPostMediaCount(post), 0),
       }
     })
     .filter(Boolean)
     .sort((leftHighlight, rightHighlight) => new Date(rightHighlight.createdAt || 0) - new Date(leftHighlight.createdAt || 0))
     .slice(0, 9)
+}
+
+function readContentValue(value, fallback = '') {
+  return value == null ? fallback : value
 }
 
 function normalizeSiteContent(content, fallbackContent) {
@@ -112,19 +118,19 @@ function normalizeSiteContent(content, fallbackContent) {
   return {
     heroSlides: heroSlides.map((slide, index) => ({
       id: slide.id || fallback.heroSlides[index]?.id || `hero-${index + 1}`,
-      title: slide.title || fallback.heroSlides[index]?.title || '',
-      subtitle: slide.subtitle || fallback.heroSlides[index]?.subtitle || '',
-      caption: slide.caption || fallback.heroSlides[index]?.caption || '',
-      imageUrl: slide.imageUrl || fallback.heroSlides[index]?.imageUrl || '',
+      title: readContentValue(slide?.title, fallback.heroSlides[index]?.title || ''),
+      subtitle: readContentValue(slide?.subtitle, fallback.heroSlides[index]?.subtitle || ''),
+      caption: readContentValue(slide?.caption, fallback.heroSlides[index]?.caption || ''),
+      imageUrl: readContentValue(slide?.imageUrl, fallback.heroSlides[index]?.imageUrl || ''),
     })),
     eventRows: eventRows.map((eventRow, index) => ({
       id: eventRow.id || fallback.eventRows[index]?.id || `event-${index + 1}`,
-      description: eventRow.description || fallback.eventRows[index]?.description || '',
-      imageUrl: eventRow.imageUrl || fallback.eventRows[index]?.imageUrl || '',
+      description: readContentValue(eventRow?.description, fallback.eventRows[index]?.description || ''),
+      imageUrl: readContentValue(eventRow?.imageUrl, fallback.eventRows[index]?.imageUrl || ''),
     })),
     footer: {
-      title: content?.footer?.title || fallback.footer.title,
-      description: content?.footer?.description || fallback.footer.description,
+      title: readContentValue(content?.footer?.title, fallback.footer.title),
+      description: readContentValue(content?.footer?.description, fallback.footer.description),
     },
   }
 }
@@ -218,6 +224,15 @@ function App() {
   const highlightStudents = buildStudentGalleryHighlights(directoryStudents)
   const isAdmin = currentUser?.role === 'admin'
   const navLinks = navigationLinks
+  const adminPageKey = JSON.stringify(siteContent)
+  const profilePageKey = JSON.stringify({
+    userId: currentUser?.id || '',
+    posts: (currentUser?.posts || []).map((post) => ({
+      id: post.id,
+      caption: post.caption,
+      media: getPostMediaItems(post).map((item) => `${item.type}:${item.url}`),
+    })),
+  })
 
   useEffect(() => {
     if (heroSlides.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -559,21 +574,47 @@ function App() {
   const handlePostSubmit = async (event) => {
     event.preventDefault()
 
-    const imageFiles = Array.from(event.target.elements.namedItem('postImages')?.files || [])
+    const mediaFiles = Array.from(event.target.elements.namedItem('postMedia')?.files || [])
+    const imageFiles = mediaFiles.filter((file) => file.type.startsWith('image/'))
+    const videoFiles = mediaFiles.filter((file) => file.type.startsWith('video/'))
 
     if (!authToken) {
       setFeedback({ type: 'error', text: uiText.messages.loginBeforeCreatePost })
       return
     }
 
-    if (!imageFiles.length) {
+    if (!mediaFiles.length) {
       setFeedback({ type: 'error', text: uiText.messages.chooseAtLeastOnePicture })
+      return
+    }
+
+    if (imageFiles.length && videoFiles.length) {
+      setFeedback({ type: 'error', text: uiText.messages.choosePicturesOrVideo })
+      return
+    }
+
+    if (videoFiles.length > 1) {
+      setFeedback({ type: 'error', text: uiText.messages.oneVideoOnly })
       return
     }
 
     if (imageFiles.length > 5) {
       setFeedback({ type: 'error', text: uiText.messages.maxFivePictures })
       return
+    }
+
+    if (videoFiles.length === 1) {
+      try {
+        const durationSeconds = await readVideoDuration(videoFiles[0])
+
+        if (durationSeconds > 10) {
+          setFeedback({ type: 'error', text: uiText.messages.videoTooLong })
+          return
+        }
+      } catch (error) {
+        setFeedback({ type: 'error', text: error.message })
+        return
+      }
     }
 
     if (!postForm.caption.trim()) {
@@ -586,8 +627,8 @@ function App() {
 
     try {
       const formData = new FormData()
-      imageFiles.forEach((imageFile) => {
-        formData.append('images', imageFile)
+      mediaFiles.forEach((mediaFile) => {
+        formData.append('media', mediaFile)
       })
       formData.append('caption', postForm.caption.trim())
 
@@ -615,7 +656,7 @@ function App() {
     }
   }
 
-  const handlePostUpdate = async (postId, caption, imageUrls) => {
+  const handlePostUpdate = async (postId, caption, mediaUrls) => {
     if (!authToken) {
       setFeedback({ type: 'error', text: uiText.messages.loginBeforeEditPost })
       return false
@@ -634,7 +675,7 @@ function App() {
     try {
       const payload = await apiRequest(`/api/auth/posts/${postId}`, {
         method: 'PUT',
-        body: { caption: nextCaption, imageUrls },
+        body: { caption: nextCaption, mediaUrls },
         token: authToken,
       })
 
@@ -699,7 +740,7 @@ function App() {
     setFeedback({ type: '', text: '' })
 
     try {
-      const payload = await apiRequest('/api/auth/password', {
+      await apiRequest('/api/auth/password', {
         method: 'PUT',
         body: passwordForm,
         token: authToken,
@@ -998,6 +1039,7 @@ function App() {
           path="/profile"
           element={
             <ProfilePage
+              key={profilePageKey}
               currentUser={currentUser}
               authForm={authForm}
               onAuthFieldChange={handleAuthFieldChange}
@@ -1034,6 +1076,7 @@ function App() {
           path="/admin"
           element={
             <AdminPage
+              key={adminPageKey}
               currentUser={currentUser}
               isLoadingSession={isLoadingSession}
               students={adminStudents}

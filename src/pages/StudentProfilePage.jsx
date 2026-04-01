@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import PostImageCarousel from '../components/PostImageCarousel'
 import { apiRequest, getAssetUrl } from '../utils/api'
-import { getPostImageUrls, normalizePostMediaCollection } from '../utils/postMedia'
+import { getPostMediaCount, normalizePostMediaCollection } from '../utils/postMedia'
 
 function buildProfileStats(student, text) {
   if (!student) {
@@ -219,7 +219,7 @@ function StudentProfilePage({ currentUser, text, carouselText, dateLocale }) {
                     />
                   </div>
                   <div className="student-post-meta">
-                    <span>{text.photoCount(getPostImageUrls(post).length)}</span>
+                    <span>{text.photoCount(getPostMediaCount(post))}</span>
                     <span>{new Date(post.createdAt).toLocaleDateString(dateLocale)}</span>
                   </div>
                   <p>{post.caption}</p>

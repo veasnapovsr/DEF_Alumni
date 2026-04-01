@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import PostImageCarousel from '../components/PostImageCarousel'
 import { getAssetUrl } from '../utils/api'
-import { getPostImageUrls } from '../utils/postMedia'
+import { getPostMediaCount, getPostMediaItems, hasVideoMedia } from '../utils/postMedia'
 
 function ProfilePage({
   currentUser,
@@ -38,38 +38,32 @@ function ProfilePage({
   const isAdmin = currentUser?.role === 'admin'
   const [editingPostId, setEditingPostId] = useState('')
   const [editingCaption, setEditingCaption] = useState('')
-  const [editingImageUrls, setEditingImageUrls] = useState([])
-
-  useEffect(() => {
-    setEditingPostId('')
-    setEditingCaption('')
-    setEditingImageUrls([])
-  }, [currentUser?.id, currentUser?.posts])
+  const [editingMediaItems, setEditingMediaItems] = useState([])
 
   const handleEditStart = (post) => {
     setEditingPostId(post.id)
     setEditingCaption(post.caption || '')
-    setEditingImageUrls(getPostImageUrls(post))
+    setEditingMediaItems(getPostMediaItems(post))
   }
 
   const handleEditCancel = () => {
     setEditingPostId('')
     setEditingCaption('')
-    setEditingImageUrls([])
+    setEditingMediaItems([])
   }
 
-  const handleRemoveEditingImage = (imageUrl) => {
-    setEditingImageUrls((currentImageUrls) => currentImageUrls.filter((currentImageUrl) => currentImageUrl !== imageUrl))
+  const handleRemoveEditingMedia = (mediaUrl) => {
+    setEditingMediaItems((currentMediaItems) => currentMediaItems.filter((currentMediaItem) => currentMediaItem.url !== mediaUrl))
   }
 
   const handleEditSubmit = async (event, postId) => {
     event.preventDefault()
 
-    if (!editingImageUrls.length) {
+    if (!editingMediaItems.length) {
       return
     }
 
-    const isSaved = await onUpdatePost(postId, editingCaption, editingImageUrls)
+    const isSaved = await onUpdatePost(postId, editingCaption, editingMediaItems.map((item) => item.url))
 
     if (isSaved) {
       handleEditCancel()
@@ -335,7 +329,7 @@ function ProfilePage({
                 <label className="post-upload-field">
                   <span>{text.choosePhotos}</span>
                   <small>{text.choosePhotosHelp}</small>
-                  <input name="postImages" type="file" accept="image/*" multiple disabled={isCreatingPost} />
+                  <input name="postMedia" type="file" accept="image/*,video/*" multiple disabled={isCreatingPost} />
                 </label>
 
                 <label className="post-caption-field">
@@ -386,7 +380,7 @@ function ProfilePage({
                         </div>
                       </div>
                       <div className="profile-post-meta">
-                        <span>{text.photoCount(getPostImageUrls(post).length)}</span>
+                        <span>{text.photoCount(getPostMediaCount(post))}</span>
                         <span>{new Date(post.createdAt).toLocaleDateString(dateLocale)}</span>
                       </div>
 
@@ -402,16 +396,20 @@ function ProfilePage({
                             />
                           </label>
                           <div className="profile-post-edit-gallery">
-                            {editingImageUrls.map((imageUrl, index) => (
-                              <article key={`${post.id}-${imageUrl}-${index}`} className="profile-post-edit-tile">
-                                <img src={getAssetUrl(imageUrl)} alt={text.postPhotoAlt(index + 1)} />
+                            {editingMediaItems.map((mediaItem, index) => (
+                              <article key={`${post.id}-${mediaItem.url}-${index}`} className="profile-post-edit-tile">
+                                {mediaItem.type === 'video' ? (
+                                  <video src={getAssetUrl(mediaItem.url)} controls playsInline preload="metadata" />
+                                ) : (
+                                  <img src={getAssetUrl(mediaItem.url)} alt={text.postPhotoAlt(index + 1)} />
+                                )}
                                 <button
                                   className="ghost-action profile-post-image-delete"
                                   type="button"
-                                  onClick={() => handleRemoveEditingImage(imageUrl)}
-                                  disabled={editingImageUrls.length === 1 || isUpdatingPost}
+                                  onClick={() => handleRemoveEditingMedia(mediaItem.url)}
+                                  disabled={editingMediaItems.length === 1 || isUpdatingPost || hasVideoMedia(post)}
                                 >
-                                  {editingImageUrls.length === 1 ? text.keepOnePhoto : text.removePhoto}
+                                  {editingMediaItems.length === 1 || hasVideoMedia(post) ? text.keepOnePhoto : text.removePhoto}
                                 </button>
                               </article>
                             ))}

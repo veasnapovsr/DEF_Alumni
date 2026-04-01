@@ -21,6 +21,9 @@ const dbPath = path.join(dataDirectory, 'db.json')
 const JWT_SECRET = process.env.JWT_SECRET || 'def-dev-secret'
 const PORT = Number(process.env.PORT || 4000)
 const MAX_POST_IMAGES = 5
+const MAX_POST_MEDIA_ITEMS = 5
+const MAX_POST_VIDEO_COUNT = 1
+const MAX_POST_VIDEO_FILE_SIZE = 25 * 1024 * 1024
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_ORIGIN || '')
   .split(',')
   .map((origin) => origin.trim())
@@ -86,17 +89,35 @@ const storage = multer.diskStorage({
   },
 })
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024, files: MAX_POST_IMAGES },
-  fileFilter: (_request, file, callback) => {
-    if (!file.mimetype.startsWith('image/')) {
-      callback(new Error('Only image uploads are allowed.'))
-      return
-    }
+function createUpload({ fileSize, files, allowedMimeTypePrefixes, errorMessage }) {
+  return multer({
+    storage,
+    limits: { fileSize, files },
+    fileFilter: (_request, file, callback) => {
+      const isAllowed = allowedMimeTypePrefixes.some((prefix) => file.mimetype.startsWith(prefix))
 
-    callback(null, true)
-  },
+      if (!isAllowed) {
+        callback(new Error(errorMessage))
+        return
+      }
+
+      callback(null, true)
+    },
+  })
+}
+
+const imageUpload = createUpload({
+  fileSize: 5 * 1024 * 1024,
+  files: 1,
+  allowedMimeTypePrefixes: ['image/'],
+  errorMessage: 'Only image uploads are allowed.',
+})
+
+const postUpload = createUpload({
+  fileSize: MAX_POST_VIDEO_FILE_SIZE,
+  files: MAX_POST_MEDIA_ITEMS,
+  allowedMimeTypePrefixes: ['image/', 'video/'],
+  errorMessage: 'Only image or video uploads are allowed for posts.',
 })
 
 app.use(cors({
@@ -116,18 +137,56 @@ function cloneDefaultHomepageContent() {
   return JSON.parse(JSON.stringify(defaultHomepageContent))
 }
 
+function normalizeText(value, fallback = '') {
+  if (value == null) {
+    return fallback
+  }
+
+  return String(value).trim()
+}
+
+function createPostMediaItem(assetUrl, type) {
+  return {
+    url: normalizeText(assetUrl),
+    type: type === 'video' ? 'video' : 'image',
+  }
+}
+
+function normalizePostMedia(post) {
+  if (Array.isArray(post?.media) && post.media.length) {
+    return post.media
+      .map((item) => createPostMediaItem(item?.url, item?.type))
+      .filter((item) => item.url)
+      .slice(0, MAX_POST_MEDIA_ITEMS)
+  }
+
+  const videoUrl = normalizeText(post?.videoUrl)
+
+  if (videoUrl) {
+    return [createPostMediaItem(videoUrl, 'video')]
+  }
+
+  const imageUrls = Array.isArray(post?.imageUrls)
+    ? post.imageUrls.map((imageUrl) => normalizeText(imageUrl)).filter(Boolean).slice(0, MAX_POST_IMAGES)
+    : normalizeText(post?.imageUrl)
+      ? [normalizeText(post.imageUrl)]
+      : []
+
+  return imageUrls.map((imageUrl) => createPostMediaItem(imageUrl, 'image'))
+}
+
 function normalizePost(post) {
   const createdAt = post?.createdAt || new Date().toISOString()
-  const imageUrls = Array.isArray(post?.imageUrls)
-    ? post.imageUrls.map((imageUrl) => String(imageUrl || '').trim()).filter(Boolean).slice(0, MAX_POST_IMAGES)
-    : String(post?.imageUrl || '').trim()
-      ? [String(post.imageUrl).trim()]
-      : []
+  const media = normalizePostMedia(post)
+  const imageUrls = media.filter((item) => item.type === 'image').map((item) => item.url)
+  const videoUrl = media.find((item) => item.type === 'video')?.url || ''
 
   return {
     id: String(post?.id || randomUUID()),
     imageUrl: imageUrls[0] || '',
     imageUrls,
+    videoUrl,
+    media,
     caption: String(post?.caption || '').trim(),
     createdAt,
   }
@@ -145,21 +204,19 @@ function normalizeHomepageContent(homepage) {
   return {
     heroSlides: heroSlides.map((slide, index) => ({
       id: String(slide?.id || fallback.heroSlides[index]?.id || randomUUID()),
-      title: String(slide?.title || fallback.heroSlides[index]?.title || '').trim() || fallback.heroSlides[index]?.title || 'Homepage slide',
-      subtitle: String(slide?.subtitle || fallback.heroSlides[index]?.subtitle || '').trim() || fallback.heroSlides[index]?.subtitle || '',
-      caption: String(slide?.caption || fallback.heroSlides[index]?.caption || '').trim() || fallback.heroSlides[index]?.caption || `Slide ${index + 1}`,
+      title: normalizeText(slide?.title, fallback.heroSlides[index]?.title || 'Homepage slide'),
+      subtitle: normalizeText(slide?.subtitle, fallback.heroSlides[index]?.subtitle || ''),
+      caption: normalizeText(slide?.caption, fallback.heroSlides[index]?.caption || `Slide ${index + 1}`),
       imageUrl: String(slide?.imageUrl || fallback.heroSlides[index]?.imageUrl || ''),
     })),
     eventRows: eventRows.map((eventRow, index) => ({
       id: String(eventRow?.id || fallback.eventRows[index]?.id || randomUUID()),
-      description: String(eventRow?.description || fallback.eventRows[index]?.description || '').trim()
-        || fallback.eventRows[index]?.description
-        || `Homepage event ${index + 1}`,
+      description: normalizeText(eventRow?.description, fallback.eventRows[index]?.description || `Homepage event ${index + 1}`),
       imageUrl: String(eventRow?.imageUrl || fallback.eventRows[index]?.imageUrl || ''),
     })),
     footer: {
-      title: String(homepage?.footer?.title || fallback.footer.title).trim() || fallback.footer.title,
-      description: String(homepage?.footer?.description || fallback.footer.description).trim() || fallback.footer.description,
+      title: normalizeText(homepage?.footer?.title, fallback.footer.title),
+      description: normalizeText(homepage?.footer?.description, fallback.footer.description),
     },
   }
 }
@@ -174,12 +231,11 @@ function normalizeDb(parsed) {
       email: String(user?.email || '').trim().toLowerCase(),
       passwordHash: String(user?.passwordHash || ''),
       fullName: String(user?.fullName || 'Student').trim() || 'Student',
-      academicYear: String(user?.academicYear || '2025-2026').trim() || '2025-2026',
-      major1: String(user?.major1 || 'Add major').trim() || 'Add major',
-      major2: String(user?.major2 || 'Add second major').trim() || 'Add second major',
-      bio: String(user?.bio || 'Tell the Department of French community about yourself.').trim()
-        || 'Tell the Department of French community about yourself.',
-      location: String(user?.location || '').trim(),
+      academicYear: normalizeText(user?.academicYear, '2025-2026'),
+      major1: normalizeText(user?.major1),
+      major2: normalizeText(user?.major2),
+      bio: normalizeText(user?.bio),
+      location: normalizeText(user?.location),
       avatarUrl: String(user?.avatarUrl || ''),
       role: user?.role === 'admin' ? 'admin' : 'student',
       createdAt,
@@ -223,11 +279,32 @@ async function deleteUploads(assetUrls) {
 }
 
 function getPostAssetUrls(post) {
-  if (Array.isArray(post?.imageUrls) && post.imageUrls.length) {
-    return post.imageUrls
+  const normalizedPost = normalizePost(post)
+
+  if (normalizedPost.media.length) {
+    return normalizedPost.media.map((item) => item.url)
   }
 
-  return post?.imageUrl ? [post.imageUrl] : []
+  return []
+}
+
+function validatePostFiles(files) {
+  const imageFiles = files.filter((file) => file.mimetype.startsWith('image/'))
+  const videoFiles = files.filter((file) => file.mimetype.startsWith('video/'))
+
+  if (videoFiles.length > MAX_POST_VIDEO_COUNT) {
+    return 'You can upload only one video in a post.'
+  }
+
+  if (imageFiles.length && videoFiles.length) {
+    return 'Choose either images or one video for a post.'
+  }
+
+  if (imageFiles.length > MAX_POST_IMAGES) {
+    return `You can upload up to ${MAX_POST_IMAGES} pictures in one post.`
+  }
+
+  return ''
 }
 
 async function ensureDb() {
@@ -285,12 +362,16 @@ async function writeDb(data) {
 }
 
 function toPublicPost(post) {
+  const normalizedPost = normalizePost(post)
+
   return {
-    id: post.id,
-    imageUrl: post.imageUrl,
-    imageUrls: Array.isArray(post.imageUrls) ? post.imageUrls : (post.imageUrl ? [post.imageUrl] : []),
-    caption: post.caption,
-    createdAt: post.createdAt,
+    id: normalizedPost.id,
+    imageUrl: normalizedPost.imageUrl,
+    imageUrls: normalizedPost.imageUrls,
+    videoUrl: normalizedPost.videoUrl,
+    media: normalizedPost.media,
+    caption: normalizedPost.caption,
+    createdAt: normalizedPost.createdAt,
   }
 }
 
@@ -362,11 +443,11 @@ function sanitizeAdminStudentPayload(body, options = {}) {
   const payload = {
     fullName: String(body?.fullName || '').trim(),
     email: String(body?.email || '').trim().toLowerCase(),
-    academicYear: String(body?.academicYear || '').trim() || '2025-2026',
-    major1: String(body?.major1 || '').trim() || 'Add major',
-    major2: String(body?.major2 || '').trim() || 'Add second major',
-    bio: String(body?.bio || '').trim() || 'Tell the Department of French community about yourself.',
-    location: String(body?.location || '').trim(),
+    academicYear: normalizeText(body?.academicYear, '2025-2026'),
+    major1: normalizeText(body?.major1),
+    major2: normalizeText(body?.major2),
+    bio: normalizeText(body?.bio),
+    location: normalizeText(body?.location),
     role: body?.role === 'admin' ? 'admin' : 'student',
   }
 
@@ -523,7 +604,7 @@ app.put('/api/auth/password', requireAuth, async (request, response) => {
   response.json({ message: 'Password updated successfully.' })
 })
 
-app.post('/api/auth/avatar', requireAuth, upload.single('avatar'), async (request, response) => {
+app.post('/api/auth/avatar', requireAuth, imageUpload.single('avatar'), async (request, response) => {
   if (!request.file) {
     response.status(400).json({ message: 'An image file is required.' })
     return
@@ -553,11 +634,19 @@ app.post('/api/auth/avatar', requireAuth, upload.single('avatar'), async (reques
   response.json({ user: toPublicUser(nextUser, { includePosts: true, includeEmail: true, includeRole: true }) })
 })
 
-app.post('/api/auth/posts', requireAuth, upload.array('images', MAX_POST_IMAGES), async (request, response) => {
+app.post('/api/auth/posts', requireAuth, postUpload.array('media', MAX_POST_MEDIA_ITEMS), async (request, response) => {
   const uploadedFiles = Array.isArray(request.files) ? request.files : []
 
   if (!uploadedFiles.length) {
-    response.status(400).json({ message: 'At least one post image is required.' })
+    response.status(400).json({ message: 'At least one post image or video is required.' })
+    return
+  }
+
+  const postFilesValidationError = validatePostFiles(uploadedFiles)
+
+  if (postFilesValidationError) {
+    await deleteUploads(uploadedFiles.map((file) => `/uploads/${file.filename}`))
+    response.status(400).json({ message: postFilesValidationError })
     return
   }
 
@@ -578,12 +667,16 @@ app.post('/api/auth/posts', requireAuth, upload.array('images', MAX_POST_IMAGES)
     return
   }
 
-  const imageUrls = uploadedFiles.map((file) => `/uploads/${file.filename}`)
+  const media = uploadedFiles.map((file) => createPostMediaItem(`/uploads/${file.filename}`, file.mimetype.startsWith('video/') ? 'video' : 'image'))
+  const imageUrls = media.filter((item) => item.type === 'image').map((item) => item.url)
+  const videoUrl = media.find((item) => item.type === 'video')?.url || ''
 
   const nextPost = {
     id: randomUUID(),
     imageUrl: imageUrls[0],
     imageUrls,
+    videoUrl,
+    media,
     caption,
     createdAt: new Date().toISOString(),
   }
@@ -624,39 +717,47 @@ app.put('/api/auth/posts/:postId', requireAuth, async (request, response) => {
   }
 
   const currentPost = db.users[userIndex].posts[postIndex]
-  const currentImageUrls = getPostAssetUrls(currentPost)
-  const requestedImageUrls = Array.isArray(request.body.imageUrls)
-    ? request.body.imageUrls.map((imageUrl) => String(imageUrl || '').trim()).filter(Boolean)
-    : currentImageUrls
+  const currentMedia = normalizePost(currentPost).media
+  const currentMediaUrls = currentMedia.map((item) => item.url)
+  const requestedMediaUrls = Array.isArray(request.body.mediaUrls)
+    ? request.body.mediaUrls.map((mediaUrl) => String(mediaUrl || '').trim()).filter(Boolean)
+    : Array.isArray(request.body.imageUrls)
+      ? request.body.imageUrls.map((imageUrl) => String(imageUrl || '').trim()).filter(Boolean)
+      : currentMediaUrls
 
-  if (!requestedImageUrls.length) {
-    response.status(400).json({ message: 'A post must keep at least one image.' })
+  if (!requestedMediaUrls.length) {
+    response.status(400).json({ message: 'A post must keep at least one media file.' })
     return
   }
 
-  if (requestedImageUrls.length > MAX_POST_IMAGES) {
-    response.status(400).json({ message: `A post can contain at most ${MAX_POST_IMAGES} images.` })
+  if (requestedMediaUrls.length > MAX_POST_MEDIA_ITEMS) {
+    response.status(400).json({ message: `A post can contain at most ${MAX_POST_MEDIA_ITEMS} media files.` })
     return
   }
 
-  const invalidImageUrl = requestedImageUrls.find((imageUrl) => !currentImageUrls.includes(imageUrl))
+  const invalidMediaUrl = requestedMediaUrls.find((mediaUrl) => !currentMediaUrls.includes(mediaUrl))
 
-  if (invalidImageUrl) {
-    response.status(400).json({ message: 'Post images could not be updated.' })
+  if (invalidMediaUrl) {
+    response.status(400).json({ message: 'Post media could not be updated.' })
     return
   }
 
-  const removedImageUrls = currentImageUrls.filter((imageUrl) => !requestedImageUrls.includes(imageUrl))
+  const nextMedia = currentMedia.filter((item) => requestedMediaUrls.includes(item.url))
+  const nextImageUrls = nextMedia.filter((item) => item.type === 'image').map((item) => item.url)
+  const nextVideoUrl = nextMedia.find((item) => item.type === 'video')?.url || ''
+  const removedMediaUrls = currentMediaUrls.filter((mediaUrl) => !requestedMediaUrls.includes(mediaUrl))
 
   const nextPosts = [...db.users[userIndex].posts]
   nextPosts[postIndex] = {
     ...currentPost,
-    imageUrl: requestedImageUrls[0],
-    imageUrls: requestedImageUrls,
+    imageUrl: nextImageUrls[0] || '',
+    imageUrls: nextImageUrls,
+    videoUrl: nextVideoUrl,
+    media: nextMedia,
     caption,
   }
 
-  await deleteUploads(removedImageUrls)
+  await deleteUploads(removedMediaUrls)
 
   const nextUser = {
     ...db.users[userIndex],
@@ -861,7 +962,7 @@ app.put('/api/admin/homepage', requireAuth, requireAdmin, async (request, respon
   response.json({ content: db.homepage })
 })
 
-app.post('/api/admin/homepage/:section/:itemId/image', requireAuth, requireAdmin, upload.single('image'), async (request, response) => {
+app.post('/api/admin/homepage/:section/:itemId/image', requireAuth, requireAdmin, imageUpload.single('image'), async (request, response) => {
   if (!request.file) {
     response.status(400).json({ message: 'A homepage image is required.' })
     return
@@ -901,8 +1002,13 @@ app.post('/api/admin/homepage/:section/:itemId/image', requireAuth, requireAdmin
 
 app.use((error, _request, response, _next) => {
   if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_COUNT' || (error.code === 'LIMIT_UNEXPECTED_FILE' && error.field === 'images')) {
-      response.status(400).json({ message: `You can upload up to ${MAX_POST_IMAGES} photos in one post.` })
+    if (error.code === 'LIMIT_FILE_COUNT' || (error.code === 'LIMIT_UNEXPECTED_FILE' && error.field === 'media')) {
+      response.status(400).json({ message: `You can upload up to ${MAX_POST_MEDIA_ITEMS} files in one post.` })
+      return
+    }
+
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      response.status(400).json({ message: `Each uploaded file must be smaller than ${Math.round(MAX_POST_VIDEO_FILE_SIZE / (1024 * 1024))} MB.` })
       return
     }
 
