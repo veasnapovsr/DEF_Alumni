@@ -89,24 +89,8 @@
       "avatarUrl": "/uploads/1773220565687-3f3023d7-1bdc-489d-8538-097840ff2479.jpg",
       "role": "admin",
       "createdAt": "2026-03-11T09:15:56.098Z",
-      "updatedAt": "2026-04-01T01:34:37.351Z",
+      "updatedAt": "2026-04-01T03:48:08.554Z",
       "posts": [
-        {
-          "id": "95f15efc-03b4-47a1-bd1b-bae82379cfc4",
-          "imageUrl": "/uploads/1775007277344-90cf9a8b-2a93-49b2-a202-116559251f7d.jpg",
-          "imageUrls": [
-            "/uploads/1775007277344-90cf9a8b-2a93-49b2-a202-116559251f7d.jpg"
-          ],
-          "videoUrl": "",
-          "media": [
-            {
-              "url": "/uploads/1775007277344-90cf9a8b-2a93-49b2-a202-116559251f7d.jpg",
-              "type": "image"
-            }
-          ],
-          "caption": "meme",
-          "createdAt": "2026-04-01T01:34:37.351Z"
-        },
         {
           "id": "927dd5f4-73df-431d-90aa-c0d368589278",
           "imageUrl": "/uploads/1773476036934-2d6aaf27-1770-4c92-80e3-9e88a1393d9d.jpg",
@@ -201,7 +185,7 @@
         "id": "hero-access",
         "title": "La journée de la francophonie",
         "subtitle": "Profiles are no longer placeholders. Existing accounts can sign in, update details, and use avatar uploads backed by the server.",
-        "caption": "Account access",
+        "caption": "New events",
         "imageUrl": "/uploads/slide2.jpg"
       },
       {

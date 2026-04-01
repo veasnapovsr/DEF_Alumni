@@ -24,6 +24,10 @@ function cloneSiteContent(siteContent) {
   }
 }
 
+function serializeSiteContent(siteContent) {
+  return JSON.stringify(siteContent)
+}
+
 function AdminPage({
   currentUser,
   isLoadingSession,
@@ -45,7 +49,12 @@ function AdminPage({
   const [activePanel, setActivePanel] = useState('students')
   const [selectedStudentId, setSelectedStudentId] = useState('')
   const [studentForm, setStudentForm] = useState(() => createStudentDraft(null))
-  const [siteDraft, setSiteDraft] = useState(() => cloneSiteContent(siteContent))
+  const [siteDraftState, setSiteDraftState] = useState(() => ({
+    sourceKey: serializeSiteContent(siteContent),
+    draft: cloneSiteContent(siteContent),
+  }))
+  const siteContentKey = serializeSiteContent(siteContent)
+  const siteDraft = siteDraftState.sourceKey === siteContentKey ? siteDraftState.draft : cloneSiteContent(siteContent)
 
   const handleStudentFieldChange = (field, value) => {
     setStudentForm((currentForm) => ({
@@ -55,27 +64,33 @@ function AdminPage({
   }
 
   const handleSiteFieldChange = (section, index, field, value) => {
-    setSiteDraft((currentDraft) => ({
-      ...currentDraft,
-      [section]: currentDraft[section].map((item, itemIndex) => (
+    setSiteDraftState({
+      sourceKey: siteContentKey,
+      draft: {
+        ...siteDraft,
+        [section]: siteDraft[section].map((item, itemIndex) => (
         itemIndex === index
           ? {
               ...item,
               [field]: value,
             }
           : item
-      )),
-    }))
+        )),
+      },
+    })
   }
 
   const handleFooterChange = (field, value) => {
-    setSiteDraft((currentDraft) => ({
-      ...currentDraft,
-      footer: {
-        ...currentDraft.footer,
+    setSiteDraftState({
+      sourceKey: siteContentKey,
+      draft: {
+        ...siteDraft,
+        footer: {
+          ...siteDraft.footer,
         [field]: value,
+        },
       },
-    }))
+    })
   }
 
   const handleCreateNewStudent = () => {

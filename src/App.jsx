@@ -87,15 +87,15 @@ function buildStudentGalleryHighlights(students) {
         return null
       }
 
-      const media = galleryPosts.flatMap((post) => getPostMediaItems(post))
-      const previewImageUrl = student.avatarUrl || media.find((item) => item.type === 'image')?.url || ''
+      const latestPostMedia = getPostMediaItems(latestPost)
+      const previewMediaItem = latestPostMedia[0] || (student.avatarUrl ? { type: 'image', url: student.avatarUrl } : null)
 
       return {
         id: student.id,
         studentId: student.id,
         fullName: student.fullName,
-        previewImageUrl,
-        media,
+        previewMediaItem,
+        media: latestPostMedia,
         caption: latestPost.caption || '',
         createdAt: latestPost.createdAt || '',
         totalPhotos: student.posts.reduce((mediaCount, post) => mediaCount + getPostMediaCount(post), 0),
@@ -224,15 +224,6 @@ function App() {
   const highlightStudents = buildStudentGalleryHighlights(directoryStudents)
   const isAdmin = currentUser?.role === 'admin'
   const navLinks = navigationLinks
-  const adminPageKey = JSON.stringify(siteContent)
-  const profilePageKey = JSON.stringify({
-    userId: currentUser?.id || '',
-    posts: (currentUser?.posts || []).map((post) => ({
-      id: post.id,
-      caption: post.caption,
-      media: getPostMediaItems(post).map((item) => `${item.type}:${item.url}`),
-    })),
-  })
 
   useEffect(() => {
     if (heroSlides.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -1039,7 +1030,6 @@ function App() {
           path="/profile"
           element={
             <ProfilePage
-              key={profilePageKey}
               currentUser={currentUser}
               authForm={authForm}
               onAuthFieldChange={handleAuthFieldChange}
@@ -1076,7 +1066,6 @@ function App() {
           path="/admin"
           element={
             <AdminPage
-              key={adminPageKey}
               currentUser={currentUser}
               isLoadingSession={isLoadingSession}
               students={adminStudents}
